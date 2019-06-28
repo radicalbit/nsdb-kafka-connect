@@ -1,0 +1,18 @@
+sudo: required
+dist: precise
+language: scala
+scala:
+  - 2.11.11
+  - 2.12.7
+jdk:
+  - oraclejdk8
+script:
+  - sbt clean coverage ++$TRAVIS_SCALA_VERSION fixCheck test coverageReport coverageAggregate
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+  - >
+    test "${TRAVIS_PULL_REQUEST}" = 'false' &&
+    test "${TRAVIS_REPO_SLUG}" = 'radicalbit/nsdb-kafka-connect' &&
+    test "${TRAVIS_JDK_VERSION}" = 'oraclejdk8' &&
+    sh "$TRAVIS_BUILD_DIR/travis-credentials.sh" &&
+    sbt publish
