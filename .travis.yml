@@ -15,4 +15,4 @@ after_success:
     test "${TRAVIS_REPO_SLUG}" = 'radicalbit/nsdb-kafka-connect' &&
     test "${TRAVIS_JDK_VERSION}" = 'oraclejdk8' &&
     sh "$TRAVIS_BUILD_DIR/travis-credentials.sh" &&
-    sbt publish
+    sbt ++$TRAVIS_SCALA_VERSION publish
