@@ -20,6 +20,7 @@ import java.util.{Collection => JCollection, Map => JMap}
 
 import com.datamountaineer.kcql.Kcql
 import io.radicalbit.nsdb.api.scala.NSDB
+import io.radicalbit.nsdb.connector.kafka.sink.NSDbSinkWriter.{validateDefaultValue, validateDuration}
 import io.radicalbit.nsdb.connector.kafka.sink.conf.NsdbConfigs
 import org.apache.kafka.common.utils.AppInfoParser
 import org.apache.kafka.connect.sink.{SinkRecord, SinkTask}
@@ -29,7 +30,7 @@ import scala.collection.JavaConverters._
 import scala.concurrent.{Await, ExecutionContext}
 
 /**
-  * Nsdb Sink task.
+  * NSDb Sink task.
   */
 class NSDbSinkTask extends SinkTask {
   private val log = LoggerFactory.getLogger(classOf[NSDbSinkTask])
@@ -53,9 +54,11 @@ class NSDbSinkTask extends SinkTask {
         kcqls = props.get(NsdbConfigs.NSDB_KCQL).split(";").map(Kcql.parse).groupBy(_.getSource),
         globalDb = Option(props.get(NsdbConfigs.NSDB_DB)),
         globalNamespace = Option(props.get(NsdbConfigs.NSDB_NAMESPACE)),
-        defaultValueStr = Option(props.get(NsdbConfigs.NSDB_DEFAULT_VALUE)),
-        retentionPolicy = Option(props.get(NsdbConfigs.NSDB_METRIC_RETENTION_POLICY)),
-        shardInterval = Option(props.get(NsdbConfigs.NSDB_SHARD_INTERVAL))
+        defaultValue = validateDefaultValue(Option(props.get(NsdbConfigs.NSDB_DEFAULT_VALUE))),
+        retentionPolicy = validateDuration(NsdbConfigs.NSDB_METRIC_RETENTION_POLICY,
+                                           Option(props.get(NsdbConfigs.NSDB_METRIC_RETENTION_POLICY))),
+        shardInterval =
+          validateDuration(NsdbConfigs.NSDB_SHARD_INTERVAL, Option(props.get(NsdbConfigs.NSDB_SHARD_INTERVAL)))
       ))
   }
 

@@ -27,6 +27,8 @@ import org.slf4j.LoggerFactory
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 import scala.util.Try
 
@@ -37,18 +39,19 @@ class NSDbSinkWriter(connection: NSDB,
                      kcqls: Map[String, Array[Kcql]],
                      globalDb: Option[String],
                      globalNamespace: Option[String],
-                     defaultValueStr: Option[String],
-                     retentionPolicy: Option[String],
-                     shardInterval: Option[String])
+                     defaultValue: Option[java.math.BigDecimal],
+                     retentionPolicy: Option[Duration],
+                     shardInterval: Option[Duration])
     extends StrictLogging {
 
-  logger.info("Initialising Nsdb writer")
+  logger.info("Initialising NSDb writer")
 
-  import NSDbSinkWriter.validateDefaultValue
+  val initializedCoordinates: ListBuffer[(String, String, String)] = ListBuffer.empty
 
-  val defaultValue: Option[java.math.BigDecimal] = validateDefaultValue(defaultValueStr)
-
-  val initializedMetrics: ListBuffer[String] = ListBuffer.empty
+  val parsedKcql: Map[String, Array[ParsedKcql]] = kcqls.map {
+    case (topic, rawKcqlArray) =>
+      (topic, rawKcqlArray.map(kcql => ParsedKcql(kcql, globalDb, globalNamespace, defaultValue)))
+  }
 
   /**
     * Write a list of SinkRecords to NSDb.
@@ -63,7 +66,12 @@ class NSDbSinkWriter(connection: NSDB,
       val grouped = records.groupBy(_.topic())
       grouped.foreach({
         case (topic, entries) =>
-          writeRecords(topic, entries, kcqls.getOrElse(topic, Array.empty), globalDb, globalNamespace, defaultValue)
+          writeRecords(topic,
+                       entries,
+                       parsedKcql.getOrElse(topic, Array.empty),
+                       globalDb,
+                       globalNamespace,
+                       defaultValue)
       })
     }
   }
@@ -76,7 +84,7 @@ class NSDbSinkWriter(connection: NSDB,
     **/
   private def writeRecords(topic: String,
                            records: List[SinkRecord],
-                           kcqls: Array[Kcql],
+                           kcqls: Array[ParsedKcql],
                            globalDb: Option[String],
                            globalNamespace: Option[String],
                            defaultValue: Option[java.math.BigDecimal]): Unit = {
@@ -86,21 +94,39 @@ class NSDbSinkWriter(connection: NSDB,
 
     val recordMaps = records.map(parse(_, globalDb, globalNamespace, defaultValue))
 
-    kcqls.foreach(kcql => {
+    kcqls.foreach(parsedKcql => {
       logger.debug(
         "Handling query: \t{}\n Found also user params db: {}, namespace: {}, defaultValue: {}",
-        kcql,
+        parsedKcql,
         globalDb.isDefined,
         globalNamespace.isDefined,
         defaultValue.isDefined
       )
-      val parsedKcql = ParsedKcql(kcql, globalDb, globalNamespace, defaultValue)
+      val bitSeq: Future[List[Bit]] = Future.sequence(recordMaps.map(map => {
+        val convertedBit = convertToBit(parsedKcql, map)
+        initializedCoordinates += ((convertedBit.db, convertedBit.namespace, convertedBit.metric))
+        connection
+          .init(
+            connection
+              .db(convertedBit.db)
+              .namespace(convertedBit.namespace)
+              .metric(convertedBit.metric)
+              .shardInterval("")
+              .retention(""))
+          .map { response =>
+            if (!response.completedSuccessfully)
+              logger.warn(
+                "init metric for db: {}, namespace: {}, metric: {} completed with error {}",
+                convertedBit.db,
+                convertedBit.namespace,
+                convertedBit.metric,
+                response.errorMsg
+              )
+            convertedBit
+          }
+      }))
 
-      val bitSeq = recordMaps.map(map => {
-        convertToBit(parsedKcql, map)
-      })
-
-      connection.write(bitSeq)
+      bitSeq.flatMap(connection.write)
 
       logger.debug("Wrote {} to NSDb.", recordMaps.length)
     })
