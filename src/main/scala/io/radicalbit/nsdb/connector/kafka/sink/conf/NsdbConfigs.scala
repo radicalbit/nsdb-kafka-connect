@@ -36,13 +36,19 @@ object NsdbConfigs {
   val NSDB_KCQL_DOC = "Kcql semicolon separated list"
 
   val NSDB_DB     = "nsdb.db"
-  val NSDB_DB_DOC = "Nsdb db (optional)"
+  val NSDB_DB_DOC = "NSDb db (optional)"
 
   val NSDB_NAMESPACE     = "nsdb.namespace"
-  val NSDB_NAMESPACE_DOC = "Nsdb namespace (optional)"
+  val NSDB_NAMESPACE_DOC = "NSDb namespace (optional)"
 
   val NSDB_DEFAULT_VALUE     = "nsdb.defaultValue"
-  val NSDB_DEFAULT_VALUE_DOC = "Nsdb default value (optional)"
+  val NSDB_DEFAULT_VALUE_DOC = "NSDb default value (optional)"
+
+  val NSDB_METRIC_RETENTION_POLICY     = "nsdb.metric.retention.policy"
+  val NSDB_METRIC_RETENTION_POLICY_DOC = "NSDb retention policy (optional)"
+
+  val NSDB_SHARD_INTERVAL     = "nsdb.shard.interval"
+  val NSDB_SHARD_INTERVAL_DOC = "NSDb shard interval (optional)"
 
   /**
     * @return sink expected configuration:
@@ -53,11 +59,15 @@ object NsdbConfigs {
     *
     *         - nsdb.kcql semicolon separated list of kcql statements to filter data from topics.
     *
-    *         - nsdb.db the nsdb db to store records in case a mapping in the kcql is not defined
+    *         - nsdb.db the nsdb db to store records in case a mapping in the kcql is not defined.
     *
-    *         -nsdb.namespace the nsdb db to store records in case a mapping in the kcql is not defined
+    *         - nsdb.namespace the nsdb db to store records in case a mapping in the kcql is not defined.
     *
-    *         -nsdb.defaultValue the value to be used in case a mapping in the kcql is not defined
+    *         - nsdb.defaultValue the value to be used in case a mapping in the kcql is not defined.
+    *
+    *         - nsdb.metric.retention.policy the retention policy applied to the metric specified in the kcql.
+    *
+    *         - nsdb.shard.interval the shatd interval applied to the metric specified in the kcql.
     */
   def configDef: ConfigDef =
     new ConfigDef()
@@ -90,5 +100,25 @@ object NsdbConfigs {
       .define(NSDB_DB, Type.STRING, null, Importance.MEDIUM, NSDB_DB_DOC)
       .define(NSDB_NAMESPACE, Type.STRING, null, Importance.MEDIUM, NSDB_NAMESPACE_DOC)
       .define(NSDB_DEFAULT_VALUE, Type.STRING, null, Importance.MEDIUM, NSDB_DEFAULT_VALUE_DOC)
+      .define(
+        NSDB_METRIC_RETENTION_POLICY,
+        Type.STRING,
+        null,
+        Importance.MEDIUM,
+        NSDB_METRIC_RETENTION_POLICY_DOC,
+        "Metric Init Params",
+        1,
+        ConfigDef.Width.MEDIUM,
+        NSDB_METRIC_RETENTION_POLICY
+      )
+      .define(NSDB_SHARD_INTERVAL,
+              Type.STRING,
+              null,
+              Importance.MEDIUM,
+              NSDB_SHARD_INTERVAL_DOC,
+              "Metric Init Params",
+              2,
+              ConfigDef.Width.MEDIUM,
+              NSDB_SHARD_INTERVAL)
 
 }

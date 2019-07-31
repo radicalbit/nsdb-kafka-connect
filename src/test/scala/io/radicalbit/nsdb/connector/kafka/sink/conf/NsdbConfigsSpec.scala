@@ -71,5 +71,29 @@ class NsdbConfigsSpec extends FlatSpec with Matchers with OneInstancePerTest {
     configKeys.get(NsdbConfigs.NSDB_DEFAULT_VALUE).importance shouldBe Importance.MEDIUM
     configKeys.get(NsdbConfigs.NSDB_DEFAULT_VALUE).documentation shouldBe NsdbConfigs.NSDB_DEFAULT_VALUE_DOC
 
+    configKeys.get(NsdbConfigs.NSDB_METRIC_RETENTION_POLICY).name shouldBe NsdbConfigs.NSDB_METRIC_RETENTION_POLICY
+    configKeys.get(NsdbConfigs.NSDB_METRIC_RETENTION_POLICY).`type` shouldBe Type.STRING
+    configKeys.get(NsdbConfigs.NSDB_METRIC_RETENTION_POLICY).defaultValue shouldBe null
+    configKeys.get(NsdbConfigs.NSDB_METRIC_RETENTION_POLICY).importance shouldBe Importance.MEDIUM
+    configKeys
+      .get(NsdbConfigs.NSDB_METRIC_RETENTION_POLICY)
+      .documentation shouldBe NsdbConfigs.NSDB_METRIC_RETENTION_POLICY_DOC
+    configKeys.get(NsdbConfigs.NSDB_METRIC_RETENTION_POLICY).group shouldBe "Metric Init Params"
+    configKeys.get(NsdbConfigs.NSDB_METRIC_RETENTION_POLICY).orderInGroup shouldBe 1
+    configKeys.get(NsdbConfigs.NSDB_METRIC_RETENTION_POLICY).width shouldBe ConfigDef.Width.MEDIUM
+    configKeys
+      .get(NsdbConfigs.NSDB_METRIC_RETENTION_POLICY)
+      .displayName shouldBe NsdbConfigs.NSDB_METRIC_RETENTION_POLICY
+
+    configKeys.get(NsdbConfigs.NSDB_SHARD_INTERVAL).name shouldBe NsdbConfigs.NSDB_SHARD_INTERVAL
+    configKeys.get(NsdbConfigs.NSDB_SHARD_INTERVAL).`type` shouldBe Type.STRING
+    configKeys.get(NsdbConfigs.NSDB_SHARD_INTERVAL).defaultValue shouldBe null
+    configKeys.get(NsdbConfigs.NSDB_SHARD_INTERVAL).importance shouldBe Importance.MEDIUM
+    configKeys.get(NsdbConfigs.NSDB_SHARD_INTERVAL).documentation shouldBe NsdbConfigs.NSDB_SHARD_INTERVAL_DOC
+    configKeys.get(NsdbConfigs.NSDB_SHARD_INTERVAL).group shouldBe "Metric Init Params"
+    configKeys.get(NsdbConfigs.NSDB_SHARD_INTERVAL).orderInGroup shouldBe 2
+    configKeys.get(NsdbConfigs.NSDB_SHARD_INTERVAL).width shouldBe ConfigDef.Width.MEDIUM
+    configKeys.get(NsdbConfigs.NSDB_SHARD_INTERVAL).displayName shouldBe NsdbConfigs.NSDB_SHARD_INTERVAL
+
   }
 }

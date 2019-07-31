@@ -22,9 +22,10 @@ import org.apache.kafka.connect.data._
 import org.apache.kafka.connect.sink.SinkRecord
 import org.scalatest.{FlatSpec, Matchers, OneInstancePerTest}
 
+import scala.concurrent.duration.Duration
 import scala.util.{Success, Try}
 
-class NsdbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest with StrictLogging {
+class NSDbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest with StrictLogging {
 
   implicit val loggerImpl: Logger = logger
 
@@ -129,7 +130,7 @@ class NsdbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
   val timestampRecord = new SinkRecord("topic", 1, Schema.STRING_SCHEMA, "key", timestampSchema, timestampStruct, 1)
 
   "SinkRecordConversion" should "convert a struct SinkRecord to a Map" in {
-    val mo = NsdbSinkWriter.parse(simpleRecord, None, None, None)
+    val mo = NSDbSinkWriter.parse(simpleRecord, None, None, None)
 
     mo.keys.size shouldBe 4
     mo.get("string_id") shouldBe Some("my_id_val")
@@ -139,7 +140,7 @@ class NsdbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
 
   "SinkRecordConversion" should "convert a SinkRecord with nested type to a Map" in {
 
-    val mo = NsdbSinkWriter.parse(record, None, None, None)
+    val mo = NSDbSinkWriter.parse(record, None, None, None)
     mo.keys.size shouldBe 8
     mo.get("string_id") shouldBe Some("my_id_val")
     mo.get("int_field") shouldBe Some(12)
@@ -155,7 +156,7 @@ class NsdbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
 
   "SinkRecordConversion" should "convert a SinkRecord with nullable fields as dimension" in {
 
-    val mo = NsdbSinkWriter.parse(optRecord, None, None, None)
+    val mo = NSDbSinkWriter.parse(optRecord, None, None, None)
     mo.keys.size shouldBe 2
     mo.get("non_opt_field") shouldBe Some("foo")
     mo.get("empty_opt_field") shouldBe None
@@ -163,7 +164,7 @@ class NsdbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
   }
 
   "SinkRecordConversion" should "convert a SinkRecord when has a big decimal as logical type" in {
-    val mo = NsdbSinkWriter.parse(decimalRecord, None, None, None)
+    val mo = NSDbSinkWriter.parse(decimalRecord, None, None, None)
     mo.keys.size shouldBe 2
 
     mo.get("decimal") shouldBe Some(new java.math.BigDecimal("30.44"))
@@ -172,7 +173,7 @@ class NsdbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
   }
 
   "SinkRecordConversion" should "convert a SinkRecord when has a timestamp logical type" in {
-    val mo = NsdbSinkWriter.parse(timestampRecord, None, None, None)
+    val mo = NSDbSinkWriter.parse(timestampRecord, None, None, None)
     mo.keys.size shouldBe 2
 
     mo.get("timestamp") shouldBe Some(sampleDate.getTime)
@@ -182,7 +183,7 @@ class NsdbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
 
   "SinkRecordConversion" should "ignore non struct records" in {
     val stringRecord = new SinkRecord("topic", 1, Schema.STRING_SCHEMA, "key", schema, "a generic string", 1)
-    an[RuntimeException] should be thrownBy NsdbSinkWriter.parse(stringRecord, None, None, None)
+    an[RuntimeException] should be thrownBy NSDbSinkWriter.parse(stringRecord, None, None, None)
   }
 
   "SinkRecordConversion" should "successfully convert records given a kcql and no global params" in {
@@ -192,7 +193,7 @@ class NsdbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
     val parsedKcql = ParsedKcql(withDimensionAlias, None, None, None)
 
     val bit: Bit =
-      NsdbSinkWriter.convertToBit(parsedKcql, NsdbSinkWriter.parse(simpleRecordWithDimentions, None, None, None))
+      NSDbSinkWriter.convertToBit(parsedKcql, NSDbSinkWriter.parse(simpleRecordWithDimentions, None, None, None))
 
     val expectedBit =
       Db("my_id_val")
@@ -213,8 +214,8 @@ class NsdbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
     val parsedKcql = ParsedKcql(withDimensionAlias, Some("globalDb"), None, None)
 
     val bit: Bit =
-      NsdbSinkWriter.convertToBit(parsedKcql,
-                                  NsdbSinkWriter.parse(simpleRecordWithDimentions, Some("globalDb"), None, None))
+      NSDbSinkWriter.convertToBit(parsedKcql,
+                                  NSDbSinkWriter.parse(simpleRecordWithDimentions, Some("globalDb"), None, None))
 
     val expectedBit =
       Db("globalDb").namespace("foo").metric("metric").timestamp(12).value(12)
@@ -229,8 +230,8 @@ class NsdbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
     val parsedKcql = ParsedKcql(withDimensionAlias, None, Some("globalNs"), None)
 
     val bit: Bit =
-      NsdbSinkWriter.convertToBit(parsedKcql,
-                                  NsdbSinkWriter.parse(simpleRecordWithDimentions, None, Some("globalNs"), None))
+      NSDbSinkWriter.convertToBit(parsedKcql,
+                                  NSDbSinkWriter.parse(simpleRecordWithDimentions, None, Some("globalNs"), None))
 
     val expectedBit =
       Db("my_id_val").namespace("globalNs").metric("metric").timestamp(12).value(12)
@@ -245,9 +246,9 @@ class NsdbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
     val parsedKcql = ParsedKcql(withDimensionAlias, Some("globalDb"), Some("globalNs"), None)
 
     val bit: Bit =
-      NsdbSinkWriter.convertToBit(
+      NSDbSinkWriter.convertToBit(
         parsedKcql,
-        NsdbSinkWriter.parse(simpleRecordWithDimentions, Some("globalDb"), Some("globalNs"), None))
+        NSDbSinkWriter.parse(simpleRecordWithDimentions, Some("globalDb"), Some("globalNs"), None))
 
     val expectedBit =
       Db("globalDb")
@@ -268,8 +269,8 @@ class NsdbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
     val parsedKcql = ParsedKcql(withDimensionAlias, Some("globalDb"), Some("globalNs"), None)
 
     val bit: Bit =
-      NsdbSinkWriter.convertToBit(parsedKcql,
-                                  NsdbSinkWriter.parse(decimalRecord, Some("globalDb"), Some("globalNs"), None))
+      NSDbSinkWriter.convertToBit(parsedKcql,
+                                  NSDbSinkWriter.parse(decimalRecord, Some("globalDb"), Some("globalNs"), None))
 
     val timestamp = bit.timestamp
 
@@ -295,7 +296,7 @@ class NsdbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
     val parsedKcql = ParsedKcql(withDimensionAlias, None, None, Some(new java.math.BigDecimal("1")))
 
     val bit: Bit =
-      NsdbSinkWriter.convertToBit(parsedKcql, NsdbSinkWriter.parse(simpleRecordWithDimentions, None, None, None))
+      NSDbSinkWriter.convertToBit(parsedKcql, NSDbSinkWriter.parse(simpleRecordWithDimentions, None, None, None))
 
     val expectedBit =
       Db("my_id_val")
@@ -311,16 +312,42 @@ class NsdbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
 
   "SinkRecordConversion" should "not convert records given a kcql without a value alias and an invalid default value" in {
     Try {
-      NsdbSinkWriter.validateDefaultValue(Some("1"))
+      NSDbSinkWriter.validateDefaultValue(Some("1"))
     } shouldBe Success(Some(new java.math.BigDecimal("1")))
 
     Try {
-      NsdbSinkWriter.validateDefaultValue(Some("1.05"))
+      NSDbSinkWriter.validateDefaultValue(Some("1.05"))
     } shouldBe Success(Some(new java.math.BigDecimal("1.05")))
 
     Try {
-      NsdbSinkWriter.validateDefaultValue(Some("1v"))
+      NSDbSinkWriter.validateDefaultValue(Some("1v"))
     }.isFailure shouldBe true
+  }
+
+  "SinkRecordConversion" should "validate a duration properly" in {
+    Try {
+      NSDbSinkWriter.validateDuration("testField", None)
+    } shouldBe Success(None)
+
+    Try {
+      NSDbSinkWriter.validateDuration("testField", Some("whatever"))
+    }.isFailure shouldBe true
+
+    Try {
+      NSDbSinkWriter.validateDuration("testField", Some("2d"))
+    } shouldBe Success(Some(Duration("2d")))
+
+    Try {
+      NSDbSinkWriter.validateDuration("testField", Some("2 d"))
+    } shouldBe Success(Some(Duration("2 d")))
+
+    Try {
+      NSDbSinkWriter.validateDuration("testField", Some("2 days"))
+    } shouldBe Success(Some(Duration("2 days")))
+
+    Try {
+      NSDbSinkWriter.validateDuration("testField", Some("2days"))
+    } shouldBe Success(Some(Duration("2days")))
   }
 
   "SinkRecordConversion" should "successfully convert records given a kcql without a value alias and a default value" in {
@@ -330,7 +357,7 @@ class NsdbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
     val parsedKcql = ParsedKcql(withDimensionAlias, None, None, Some(new java.math.BigDecimal("1")))
 
     val bit: Bit =
-      NsdbSinkWriter.convertToBit(parsedKcql, NsdbSinkWriter.parse(simpleRecordWithDimentions, None, None, None))
+      NSDbSinkWriter.convertToBit(parsedKcql, NSDbSinkWriter.parse(simpleRecordWithDimentions, None, None, None))
 
     val expectedBit =
       Db("my_id_val")
@@ -351,7 +378,7 @@ class NsdbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
     val result = Try {
       val parsedKcql = ParsedKcql(withDimensionAlias, None, Some("globalNs"), Some(new java.math.BigDecimal("1")))
 
-      NsdbSinkWriter.convertToBit(parsedKcql, NsdbSinkWriter.parse(optRecord, None, Some("globalNs"), None))
+      NSDbSinkWriter.convertToBit(parsedKcql, NSDbSinkWriter.parse(optRecord, None, Some("globalNs"), None))
     }
 
     result.isFailure shouldBe true
@@ -364,7 +391,7 @@ class NsdbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
     val parsedKcql = ParsedKcql(withDimensionAlias, None, None, None)
 
     val bit: Bit =
-      NsdbSinkWriter.convertToBit(parsedKcql, NsdbSinkWriter.parse(simpleRecordWithDimentions, None, None, None))
+      NSDbSinkWriter.convertToBit(parsedKcql, NSDbSinkWriter.parse(simpleRecordWithDimentions, None, None, None))
 
     val timestamp = bit.timestamp
 
@@ -383,7 +410,7 @@ class NsdbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
     val parsedKcql = ParsedKcql(withDimensionAlias, None, None, None)
 
     val bit: Bit =
-      NsdbSinkWriter.convertToBit(parsedKcql, NsdbSinkWriter.parse(simpleRecordWithDimentions, None, None, None))
+      NSDbSinkWriter.convertToBit(parsedKcql, NSDbSinkWriter.parse(simpleRecordWithDimentions, None, None, None))
 
     val timestamp = bit.timestamp
 
@@ -402,7 +429,7 @@ class NsdbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
     val parsedKcql = ParsedKcql(withDimensionAlias, None, None, None)
 
     val bit: Bit =
-      NsdbSinkWriter.convertToBit(parsedKcql, NsdbSinkWriter.parse(simpleRecordWithDimentions, None, None, None))
+      NSDbSinkWriter.convertToBit(parsedKcql, NSDbSinkWriter.parse(simpleRecordWithDimentions, None, None, None))
 
     val timestamp = bit.timestamp
 
@@ -421,7 +448,7 @@ class NsdbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
     val parsedKcql = ParsedKcql(withDimensionAlias, None, None, None)
 
     val bit: Bit =
-      NsdbSinkWriter.convertToBit(parsedKcql, NsdbSinkWriter.parse(simpleRecordWithDimentions, None, None, None))
+      NSDbSinkWriter.convertToBit(parsedKcql, NSDbSinkWriter.parse(simpleRecordWithDimentions, None, None, None))
 
     val timestamp = bit.timestamp
 
@@ -440,7 +467,7 @@ class NsdbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
     val parsedKcql = ParsedKcql(withDimensionAlias, None, None, None)
 
     val bit: Bit =
-      NsdbSinkWriter.convertToBit(parsedKcql, NsdbSinkWriter.parse(simpleRecordWithDimentions, None, None, None))
+      NSDbSinkWriter.convertToBit(parsedKcql, NSDbSinkWriter.parse(simpleRecordWithDimentions, None, None, None))
 
     val timestamp = bit.timestamp
 
@@ -459,7 +486,7 @@ class NsdbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
     val parsedKcql = ParsedKcql(withDimensionAlias, None, None, None)
 
     val bit: Bit =
-      NsdbSinkWriter.convertToBit(parsedKcql, NsdbSinkWriter.parse(simpleRecordWithDimentions, None, None, None))
+      NSDbSinkWriter.convertToBit(parsedKcql, NSDbSinkWriter.parse(simpleRecordWithDimentions, None, None, None))
 
     val timestamp = bit.timestamp
 

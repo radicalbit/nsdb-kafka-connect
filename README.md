@@ -27,7 +27,7 @@ Name  | Description  | Type  | Value
 name  |  Name of the connector | String  |  Anything unique across the Connect cluster
 topics  | The topics to sink | String | comma separated list of topics used in the connector
 tasks.max  | The number of tasks to be created across the connect cluster  | Int | Default value is 1
-connector.class  | Connector FQCN  |  String | io.radicalbit.nsdb.connector.kafka.sink.NsdbSinkConnector
+connector.class  | Connector FQCN  |  String | io.radicalbit.nsdb.connector.kafka.sink.NSDbSinkConnector
 
 ## Specific Nsdb Sink Configuration
 Name  | Description  | Type  | Value
@@ -37,7 +37,9 @@ nsdb.port  | Port of the NSDb instance to connect to | Int | default value is `7
 nsdb.kcql  | Kcql expressions used to map topic data to NSDb bits | String  | semicolon separated Kcql expressions
 nsdb.db  | NSDb db to use in case no mappig is provided in the Kcql | String  |  If a mapping is provided in the Kcql this config will be overridden
 nsdb.namespace  | NSDb db to use in case no mappig is provided in the Kcql | String  | If a mapping is provided in the Kcql this config will be overridden
-nsdb.defaultValue | default value | Numeric | if a value alias is provided in the Kcql expression this config will be ignored 
+nsdb.defaultValue | default value | Numeric | if a value alias is provided in the Kcql expression this config will be ignored
+nsdb.metric.retention.policy | NSDb custom retention policy | String | NSDb duration policy applied to the metric specified in the Kcql statements formatted as a Scala Duration (e.g. 2 d, 2d, 2 days)
+nsdb.metric.interval | NSDb custom shard interval policy | String | NSDb shard interval applied to the metric specified in the Kcql statements formatted as a Scala Duration (e.g. 2 d, 2d, 2 days) 
 
 ## KCQL Support
 

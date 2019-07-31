@@ -26,23 +26,29 @@ import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
+import scala.concurrent.duration.Duration
 import scala.util.Try
 
 /**
   * Handles writes to NSDb.
   */
-class NsdbSinkWriter(connection: NSDB,
+class NSDbSinkWriter(connection: NSDB,
                      kcqls: Map[String, Array[Kcql]],
                      globalDb: Option[String],
                      globalNamespace: Option[String],
-                     defaultValueStr: Option[String])
+                     defaultValueStr: Option[String],
+                     retentionPolicy: Option[String],
+                     shardInterval: Option[String])
     extends StrictLogging {
 
   logger.info("Initialising Nsdb writer")
 
-  import NsdbSinkWriter.validateDefaultValue
+  import NSDbSinkWriter.validateDefaultValue
 
   val defaultValue: Option[java.math.BigDecimal] = validateDefaultValue(defaultValueStr)
+
+  val initializedMetrics: ListBuffer[String] = ListBuffer.empty
 
   /**
     * Write a list of SinkRecords to NSDb.
@@ -76,7 +82,7 @@ class NsdbSinkWriter(connection: NSDB,
                            defaultValue: Option[java.math.BigDecimal]): Unit = {
     logger.debug("Handling {} records for topic {}. Found also {} kcql queries.", records.size, topic, kcqls)
 
-    import NsdbSinkWriter.{logger => _, _}
+    import NSDbSinkWriter.{logger => _, _}
 
     val recordMaps = records.map(parse(_, globalDb, globalNamespace, defaultValue))
 
@@ -104,11 +110,11 @@ class NsdbSinkWriter(connection: NSDB,
   def close(): Unit = connection.close()
 }
 
-object NsdbSinkWriter {
+object NSDbSinkWriter {
 
-  private val logger = Logger(LoggerFactory.getLogger(classOf[NsdbSinkWriter]))
+  private val logger = Logger(LoggerFactory.getLogger(classOf[NSDbSinkWriter]))
 
-  val defaultTimestampKeywords = Set("now", "now()", "sys_time", "sys_time()", "current_time", "current_time()")
+  private val defaultTimestampKeywords = Set("now", "now()", "sys_time", "sys_time()", "current_time", "current_time()")
 
   private def getFieldName(parent: Option[String], field: String) = parent.map(p => s"$p.$field").getOrElse(field)
 
@@ -120,6 +126,17 @@ object NsdbSinkWriter {
     require(Try(new java.math.BigDecimal(defaultValueStr.getOrElse("0"))).isSuccess,
             s"value $defaultValueStr as default value is invalid, must be a number")
     defaultValueStr.map(new java.math.BigDecimal(_))
+  }
+
+  /**
+    * Validate if a provided string is a duration or not.
+    * @param configName the name of the config.
+    * @param configValue the optional string value.
+    */
+  def validateDuration(configName: String, configValue: Option[String]): Option[Duration] = {
+    require(Try(configValue.map(Duration.apply)).isSuccess,
+            s"value $configValue for $configName is not a valid duration")
+    configValue.map(Duration.apply)
   }
 
   /**

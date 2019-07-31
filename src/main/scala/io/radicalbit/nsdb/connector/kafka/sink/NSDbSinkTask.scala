@@ -31,29 +31,31 @@ import scala.concurrent.{Await, ExecutionContext}
 /**
   * Nsdb Sink task.
   */
-class NsdbSinkTask extends SinkTask {
-  private val log = LoggerFactory.getLogger(classOf[NsdbSinkTask])
+class NSDbSinkTask extends SinkTask {
+  private val log = LoggerFactory.getLogger(classOf[NSDbSinkTask])
 
-  private var writer: Option[NsdbSinkWriter] = None
+  private var writer: Option[NSDbSinkWriter] = None
 
   /**
     * Opens a new connection against Nsdb target and setup the writer.
     **/
   override def start(props: JMap[String, String]): Unit = {
-    log.info("Starting a {} task.", classOf[NsdbSinkTask].getSimpleName)
+    log.info("Starting a {} task.", classOf[NSDbSinkTask].getSimpleName)
     log.info("Properties are {}.", props)
 
     import scala.concurrent.duration._
 
     writer = Some(
-      new NsdbSinkWriter(
+      new NSDbSinkWriter(
         Await.result(NSDB.connect(props.get(NsdbConfigs.NSDB_HOST), props.get(NsdbConfigs.NSDB_PORT).toInt)(
                        ExecutionContext.global),
                      10.seconds),
         kcqls = props.get(NsdbConfigs.NSDB_KCQL).split(";").map(Kcql.parse).groupBy(_.getSource),
         globalDb = Option(props.get(NsdbConfigs.NSDB_DB)),
         globalNamespace = Option(props.get(NsdbConfigs.NSDB_NAMESPACE)),
-        defaultValueStr = Option(props.get(NsdbConfigs.NSDB_DEFAULT_VALUE))
+        defaultValueStr = Option(props.get(NsdbConfigs.NSDB_DEFAULT_VALUE)),
+        retentionPolicy = Option(props.get(NsdbConfigs.NSDB_METRIC_RETENTION_POLICY)),
+        shardInterval = Option(props.get(NsdbConfigs.NSDB_SHARD_INTERVAL))
       ))
   }
 

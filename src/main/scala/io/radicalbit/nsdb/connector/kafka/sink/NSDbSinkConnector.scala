@@ -31,10 +31,10 @@ import scala.collection.JavaConverters._
   * Kafka connect NSDb Sink connector
   *
   **/
-class NsdbSinkConnector extends SinkConnector {
+class NSDbSinkConnector extends SinkConnector {
 
   private var configProps: JMap[String, String] = _
-  private val log                               = LoggerFactory.getLogger(classOf[NsdbSinkConnector])
+  private val log                               = LoggerFactory.getLogger(classOf[NSDbSinkConnector])
   private var configs: Map[String, ConfigValue] = Map.empty
 
   /**
@@ -43,7 +43,7 @@ class NsdbSinkConnector extends SinkConnector {
     * @param props Input parameter.
     **/
   override def start(props: JMap[String, String]): Unit = {
-    log.info("Starting a {} source connector.", classOf[NsdbSinkConnector].getName)
+    log.info("Starting a {} source connector.", classOf[NSDbSinkConnector].getName)
     configProps = props
     configs = config().validate(props).asScala.map(c => (c.name(), c)).toMap
   }
@@ -51,7 +51,7 @@ class NsdbSinkConnector extends SinkConnector {
   /**
     * @return the Task class to be used.
     */
-  override def taskClass(): Class[NsdbSinkTask] = classOf[NsdbSinkTask]
+  override def taskClass(): Class[NSDbSinkTask] = classOf[NSDbSinkTask]
 
   /**
     * @return The connector version.
