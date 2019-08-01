@@ -39,7 +39,7 @@ nsdb.db  | NSDb db to use in case no mappig is provided in the Kcql | String  | 
 nsdb.namespace  | NSDb db to use in case no mappig is provided in the Kcql | String  | If a mapping is provided in the Kcql this config will be overridden
 nsdb.defaultValue | default value | Numeric | if a value alias is provided in the Kcql expression this config will be ignored
 nsdb.metric.retention.policy | NSDb custom retention policy | String | NSDb duration policy applied to the metric specified in the Kcql statements formatted as a Scala Duration (e.g. 2 d, 2d, 2 days)
-nsdb.metric.interval | NSDb custom shard interval policy | String | NSDb shard interval applied to the metric specified in the Kcql statements formatted as a Scala Duration (e.g. 2 d, 2d, 2 days) 
+nsdb.shard.interval | NSDb custom shard interval policy | String | NSDb shard interval applied to the metric specified in the Kcql statements formatted as a Scala Duration (e.g. 2 d, 2d, 2 days) 
 
 ## KCQL Support
 
@@ -71,6 +71,8 @@ echo '{"name":"manufacturing-nsdb-sink",
 "config": {"connector.class":"io.radicalbit.nsdb.connector.kafka.sink.NSDbSinkConnector",
 "tasks.max":"1","nsdb.host":"nsdbhost",
 "topics":"topicA, topicB, topicC",
+"nsdb.metric.retention.policy": "2d",
+"nsdb.shard.interval": "2d",
 "nsdb.kcql":
 "INSERT INTO bitA SELECT x AS a, y AS value FROM topicA WITHTIMESTAMP z;
  INSERT INTO bitB SELECT x AS a, y AS value, z as c FROM topicB WITHTIMESTAMP sys_time();
