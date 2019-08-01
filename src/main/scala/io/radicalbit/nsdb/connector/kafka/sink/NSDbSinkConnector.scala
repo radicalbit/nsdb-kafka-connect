@@ -18,7 +18,7 @@ package io.radicalbit.nsdb.connector.kafka.sink
 
 import java.util.{List => JList, Map => JMap}
 
-import io.radicalbit.nsdb.connector.kafka.sink.conf.NsdbConfigs
+import io.radicalbit.nsdb.connector.kafka.sink.conf.NSDbConfigs
 import org.apache.kafka.common.config.{ConfigDef, ConfigValue}
 import org.apache.kafka.common.utils.AppInfoParser
 import org.apache.kafka.connect.sink.SinkConnector
@@ -70,8 +70,8 @@ class NSDbSinkConnector extends SinkConnector {
     * @return Configurations for Tasks.
     */
   override def taskConfigs(maxTasks: Int): JList[JMap[String, String]] = {
-    val raw = configs.get(NsdbConfigs.NSDB_KCQL)
-    require(raw != null && raw.isDefined, s"No ${NsdbConfigs.NSDB_KCQL} provided!")
+    val raw = configs.get(NSDbConfigs.NSDB_KCQL)
+    require(raw != null && raw.isDefined, s"No ${NSDbConfigs.NSDB_KCQL} provided!")
 
     val kcqls  = raw.get.value().toString.split(";")
     val groups = ConnectorUtils.groupPartitions(kcqls.toList.asJava, maxTasks).asScala
@@ -82,10 +82,10 @@ class NSDbSinkConnector extends SinkConnector {
       .map(g => {
         val taskConfigs: java.util.Map[String, String] = new java.util.HashMap[String, String]
         //put the default host and port to be available in task in case they are not provided.
-        taskConfigs.put(NsdbConfigs.NSDB_HOST, NsdbConfigs.NSDB_HOST_DEFAULT)
-        taskConfigs.put(NsdbConfigs.NSDB_PORT, NsdbConfigs.NSDB_PORT_DEFAULT.toString)
+        taskConfigs.put(NSDbConfigs.NSDB_HOST, NSDbConfigs.NSDB_HOST_DEFAULT)
+        taskConfigs.put(NSDbConfigs.NSDB_PORT, NSDbConfigs.NSDB_PORT_DEFAULT.toString)
         taskConfigs.putAll(configProps)
-        taskConfigs.put(NsdbConfigs.NSDB_KCQL, g.asScala.mkString(";")) //overwrite
+        taskConfigs.put(NSDbConfigs.NSDB_KCQL, g.asScala.mkString(";")) //overwrite
         taskConfigs
       })
       .asJava
@@ -94,5 +94,5 @@ class NSDbSinkConnector extends SinkConnector {
   /**
     * @return The [[ConfigDef]] for this connector.
     */
-  override def config(): ConfigDef = NsdbConfigs.configDef
+  override def config(): ConfigDef = NSDbConfigs.configDef
 }

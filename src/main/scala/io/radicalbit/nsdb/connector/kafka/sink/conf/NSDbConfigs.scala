@@ -22,7 +22,7 @@ import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 /**
   * Sink configuration parameters
   */
-object NsdbConfigs {
+object NSDbConfigs {
 
   val NSDB_HOST         = "nsdb.host"
   val NSDB_HOST_DOC     = "Nsdb host"

@@ -21,7 +21,7 @@ import java.util.{Collection => JCollection, Map => JMap}
 import com.datamountaineer.kcql.Kcql
 import io.radicalbit.nsdb.api.scala.NSDB
 import io.radicalbit.nsdb.connector.kafka.sink.NSDbSinkWriter.{validateDefaultValue, validateDuration}
-import io.radicalbit.nsdb.connector.kafka.sink.conf.NsdbConfigs
+import io.radicalbit.nsdb.connector.kafka.sink.conf.NSDbConfigs
 import org.apache.kafka.common.utils.AppInfoParser
 import org.apache.kafka.connect.sink.{SinkRecord, SinkTask}
 import org.slf4j.LoggerFactory
@@ -48,17 +48,17 @@ class NSDbSinkTask extends SinkTask {
 
     writer = Some(
       new NSDbSinkWriter(
-        Await.result(NSDB.connect(props.get(NsdbConfigs.NSDB_HOST), props.get(NsdbConfigs.NSDB_PORT).toInt)(
+        Await.result(NSDB.connect(props.get(NSDbConfigs.NSDB_HOST), props.get(NSDbConfigs.NSDB_PORT).toInt)(
                        ExecutionContext.global),
                      10.seconds),
-        kcqls = props.get(NsdbConfigs.NSDB_KCQL).split(";").map(Kcql.parse).groupBy(_.getSource),
-        globalDb = Option(props.get(NsdbConfigs.NSDB_DB)),
-        globalNamespace = Option(props.get(NsdbConfigs.NSDB_NAMESPACE)),
-        defaultValue = validateDefaultValue(Option(props.get(NsdbConfigs.NSDB_DEFAULT_VALUE))),
-        retentionPolicy = validateDuration(NsdbConfigs.NSDB_METRIC_RETENTION_POLICY,
-                                           Option(props.get(NsdbConfigs.NSDB_METRIC_RETENTION_POLICY))),
+        kcqls = props.get(NSDbConfigs.NSDB_KCQL).split(";").map(Kcql.parse).groupBy(_.getSource),
+        globalDb = Option(props.get(NSDbConfigs.NSDB_DB)),
+        globalNamespace = Option(props.get(NSDbConfigs.NSDB_NAMESPACE)),
+        defaultValue = validateDefaultValue(Option(props.get(NSDbConfigs.NSDB_DEFAULT_VALUE))),
+        retentionPolicy = validateDuration(NSDbConfigs.NSDB_METRIC_RETENTION_POLICY,
+                                           Option(props.get(NSDbConfigs.NSDB_METRIC_RETENTION_POLICY))),
         shardInterval =
-          validateDuration(NsdbConfigs.NSDB_SHARD_INTERVAL, Option(props.get(NsdbConfigs.NSDB_SHARD_INTERVAL)))
+          validateDuration(NSDbConfigs.NSDB_SHARD_INTERVAL, Option(props.get(NSDbConfigs.NSDB_SHARD_INTERVAL)))
       ))
   }
 

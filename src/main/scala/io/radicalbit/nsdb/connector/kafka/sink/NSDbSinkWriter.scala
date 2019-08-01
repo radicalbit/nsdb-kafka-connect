@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
@@ -46,7 +45,9 @@ class NSDbSinkWriter(connection: NSDB,
 
   logger.info("Initialising NSDb writer")
 
-  val initializedCoordinates: ListBuffer[(String, String, String)] = ListBuffer.empty
+  lazy val initInfoProvided: Boolean = Seq(shardInterval, retentionPolicy).flatten.nonEmpty
+
+  val initializedCoordinates: mutable.Map[(String, String, String), Boolean] = mutable.Map.empty
 
   val parsedKcql: Map[String, Array[ParsedKcql]] = kcqls.map {
     case (topic, rawKcqlArray) =>
@@ -104,26 +105,33 @@ class NSDbSinkWriter(connection: NSDB,
       )
       val bitSeq: Future[List[Bit]] = Future.sequence(recordMaps.map(map => {
         val convertedBit = convertToBit(parsedKcql, map)
-        initializedCoordinates += ((convertedBit.db, convertedBit.namespace, convertedBit.metric))
-        connection
-          .init(
-            connection
-              .db(convertedBit.db)
-              .namespace(convertedBit.namespace)
-              .metric(convertedBit.metric)
-              .shardInterval("")
-              .retention(""))
-          .map { response =>
-            if (!response.completedSuccessfully)
-              logger.warn(
-                "init metric for db: {}, namespace: {}, metric: {} completed with error {}",
-                convertedBit.db,
-                convertedBit.namespace,
-                convertedBit.metric,
-                response.errorMsg
-              )
-            convertedBit
-          }
+
+        if (initInfoProvided)
+          initializedCoordinates.get((convertedBit.db, convertedBit.namespace, convertedBit.metric)) match {
+            case Some(_) => Future(convertedBit)
+            case None =>
+              initializedCoordinates += (convertedBit.db, convertedBit.namespace, convertedBit.metric) -> true
+              connection
+                .init(
+                  connection
+                    .db(convertedBit.db)
+                    .namespace(convertedBit.namespace)
+                    .metric(convertedBit.metric)
+                    .shardInterval(shardInterval.map(_.toString).getOrElse("0d"))
+                    .retention(retentionPolicy.map(_.toString).getOrElse("0d")))
+                .map { response =>
+                  if (!response.completedSuccessfully)
+                    logger.warn(
+                      "init metric for db: {}, namespace: {}, metric: {} completed with error {}",
+                      convertedBit.db,
+                      convertedBit.namespace,
+                      convertedBit.metric,
+                      response.errorMsg
+                    )
+                  convertedBit
+                }
+          } else
+          Future(convertedBit)
       }))
 
       bitSeq.flatMap(connection.write)

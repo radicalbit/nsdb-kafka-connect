@@ -68,7 +68,7 @@ INSERT INTO bitC SELECT d as db, n as namespace, x AS a, y AS value, z as b, t a
 ## example
 ```bash
 echo '{"name":"manufacturing-nsdb-sink",
-"config": {"connector.class":"io.radicalbit.nsdb.connector.kafka.sink.NsdbSinkConnector",
+"config": {"connector.class":"io.radicalbit.nsdb.connector.kafka.sink.NSDbSinkConnector",
 "tasks.max":"1","nsdb.host":"nsdbhost",
 "topics":"topicA, topicB, topicC",
 "nsdb.kcql":
