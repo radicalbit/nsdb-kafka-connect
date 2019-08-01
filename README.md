@@ -38,8 +38,8 @@ nsdb.kcql  | Kcql expressions used to map topic data to NSDb bits | String  | se
 nsdb.db  | NSDb db to use in case no mappig is provided in the Kcql | String  |  If a mapping is provided in the Kcql this config will be overridden
 nsdb.namespace  | NSDb db to use in case no mappig is provided in the Kcql | String  | If a mapping is provided in the Kcql this config will be overridden
 nsdb.defaultValue | default value | Numeric | if a value alias is provided in the Kcql expression this config will be ignored
-nsdb.metric.retention.policy | NSDb custom retention policy | String | NSDb duration policy applied to the metric specified in the Kcql statements formatted as a Scala Duration (e.g. 2 d, 2d, 2 days)
-nsdb.shard.interval | NSDb custom shard interval policy | String | NSDb shard interval applied to the metric specified in the Kcql statements formatted as a Scala Duration (e.g. 2 d, 2d, 2 days) 
+nsdb.metric.retention.policy | NSDb custom retention policy | String | Custom NSDb retention policy applied to the metric specified in the Kcql statements formatted as a Scala Duration (e.g. 2 d, 2d, 2 days).<br>If this configuration is not provided, no retention policy will be applied to the metrics. 
+nsdb.shard.interval | NSDb custom shard interval policy | String | NSDb shard interval applied to the metric specified in the Kcql statements formatted as a Scala Duration (e.g. 2 d, 2d, 2 days).<br>If this configuration is not provided, the default shard interval will be applied to the metrics.
 
 ## KCQL Support
 
