@@ -43,22 +43,30 @@ class ParsedKcqlSpec extends FlatSpec with Matchers with OneInstancePerTest {
       None,
       None)
 
-    ParsedKcql("INSERT INTO metric SELECT x AS db, y AS namespace, z AS value FROM topic WITHTIMESTAMP y",
-               None,
-               None,
-               None) shouldBe ParsedKcql("x", "y", "metric", None, Some("y"), Some("z"), Map.empty, Map.empty)
+    val queryString = "INSERT INTO metric SELECT x AS db, y AS namespace, z AS value FROM topic WITHTIMESTAMP y"
+
+    ParsedKcql(queryString, None, None, None) shouldBe ParsedKcql("x",
+                                                                  "y",
+                                                                  "metric",
+                                                                  None,
+                                                                  Some("y"),
+                                                                  Some("z"),
+                                                                  Map.empty,
+                                                                  Map.empty)
   }
 
   "KcqlFields" should "accept kcqls without db and namespace mapping but with global configs instead" in {
-    ParsedKcql("INSERT INTO metric SELECT z AS value FROM topic WITHTIMESTAMP y", Some("x"), Some("y"), None) shouldBe ParsedKcql(
-      "x",
-      "y",
-      "metric",
-      None,
-      Some("y"),
-      Some("z"),
-      Map.empty,
-      Map.empty)
+
+    val queryString = "INSERT INTO metric SELECT z AS value FROM topic WITHTIMESTAMP y"
+
+    ParsedKcql(queryString, Some("x"), Some("y"), None) shouldBe ParsedKcql("x",
+                                                                            "y",
+                                                                            "metric",
+                                                                            None,
+                                                                            Some("y"),
+                                                                            Some("z"),
+                                                                            Map.empty,
+                                                                            Map.empty)
   }
 
   "KcqlFields" should "successfully convert queries with or without aliases" in {

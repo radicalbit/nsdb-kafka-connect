@@ -26,23 +26,33 @@ import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+import scala.concurrent.duration.Duration
 import scala.util.Try
 
 /**
   * Handles writes to NSDb.
   */
-class NsdbSinkWriter(connection: NSDB,
+class NSDbSinkWriter(connection: NSDB,
                      kcqls: Map[String, Array[Kcql]],
                      globalDb: Option[String],
                      globalNamespace: Option[String],
-                     defaultValueStr: Option[String])
+                     defaultValue: Option[java.math.BigDecimal],
+                     retentionPolicy: Option[Duration],
+                     shardInterval: Option[Duration])
     extends StrictLogging {
 
-  logger.info("Initialising Nsdb writer")
+  logger.info("Initialising NSDb writer")
 
-  import NsdbSinkWriter.validateDefaultValue
+  lazy val initInfoProvided: Boolean = Seq(shardInterval, retentionPolicy).flatten.nonEmpty
 
-  val defaultValue: Option[java.math.BigDecimal] = validateDefaultValue(defaultValueStr)
+  val initializedCoordinates: mutable.Map[(String, String, String), Boolean] = mutable.Map.empty
+
+  val parsedKcql: Map[String, Array[ParsedKcql]] = kcqls.map {
+    case (topic, rawKcqlArray) =>
+      (topic, rawKcqlArray.map(kcql => ParsedKcql(kcql, globalDb, globalNamespace, defaultValue)))
+  }
 
   /**
     * Write a list of SinkRecords to NSDb.
@@ -57,7 +67,12 @@ class NsdbSinkWriter(connection: NSDB,
       val grouped = records.groupBy(_.topic())
       grouped.foreach({
         case (topic, entries) =>
-          writeRecords(topic, entries, kcqls.getOrElse(topic, Array.empty), globalDb, globalNamespace, defaultValue)
+          writeRecords(topic,
+                       entries,
+                       parsedKcql.getOrElse(topic, Array.empty),
+                       globalDb,
+                       globalNamespace,
+                       defaultValue)
       })
     }
   }
@@ -70,31 +85,56 @@ class NsdbSinkWriter(connection: NSDB,
     **/
   private def writeRecords(topic: String,
                            records: List[SinkRecord],
-                           kcqls: Array[Kcql],
+                           kcqls: Array[ParsedKcql],
                            globalDb: Option[String],
                            globalNamespace: Option[String],
                            defaultValue: Option[java.math.BigDecimal]): Unit = {
     logger.debug("Handling {} records for topic {}. Found also {} kcql queries.", records.size, topic, kcqls)
 
-    import NsdbSinkWriter.{logger => _, _}
+    import NSDbSinkWriter.{logger => _, _}
 
     val recordMaps = records.map(parse(_, globalDb, globalNamespace, defaultValue))
 
-    kcqls.foreach(kcql => {
+    kcqls.foreach(parsedKcql => {
       logger.debug(
         "Handling query: \t{}\n Found also user params db: {}, namespace: {}, defaultValue: {}",
-        kcql,
+        parsedKcql,
         globalDb.isDefined,
         globalNamespace.isDefined,
         defaultValue.isDefined
       )
-      val parsedKcql = ParsedKcql(kcql, globalDb, globalNamespace, defaultValue)
+      val bitSeq: Future[List[Bit]] = Future.sequence(recordMaps.map(map => {
+        val convertedBit = convertToBit(parsedKcql, map)
 
-      val bitSeq = recordMaps.map(map => {
-        convertToBit(parsedKcql, map)
-      })
+        if (initInfoProvided)
+          initializedCoordinates.get((convertedBit.db, convertedBit.namespace, convertedBit.metric)) match {
+            case Some(_) => Future(convertedBit)
+            case None =>
+              initializedCoordinates += (convertedBit.db, convertedBit.namespace, convertedBit.metric) -> true
+              connection
+                .init(
+                  connection
+                    .db(convertedBit.db)
+                    .namespace(convertedBit.namespace)
+                    .metric(convertedBit.metric)
+                    .shardInterval(shardInterval.map(_.toString).getOrElse("0d"))
+                    .retention(retentionPolicy.map(_.toString).getOrElse("0d")))
+                .map { response =>
+                  if (!response.completedSuccessfully)
+                    logger.warn(
+                      "init metric for db: {}, namespace: {}, metric: {} completed with error {}",
+                      convertedBit.db,
+                      convertedBit.namespace,
+                      convertedBit.metric,
+                      response.errorMsg
+                    )
+                  convertedBit
+                }
+          } else
+          Future(convertedBit)
+      }))
 
-      connection.write(bitSeq)
+      bitSeq.flatMap(connection.write)
 
       logger.debug("Wrote {} to NSDb.", recordMaps.length)
     })
@@ -104,11 +144,11 @@ class NsdbSinkWriter(connection: NSDB,
   def close(): Unit = connection.close()
 }
 
-object NsdbSinkWriter {
+object NSDbSinkWriter {
 
-  private val logger = Logger(LoggerFactory.getLogger(classOf[NsdbSinkWriter]))
+  private val logger = Logger(LoggerFactory.getLogger(classOf[NSDbSinkWriter]))
 
-  val defaultTimestampKeywords = Set("now", "now()", "sys_time", "sys_time()", "current_time", "current_time()")
+  private val defaultTimestampKeywords = Set("now", "now()", "sys_time", "sys_time()", "current_time", "current_time()")
 
   private def getFieldName(parent: Option[String], field: String) = parent.map(p => s"$p.$field").getOrElse(field)
 
@@ -120,6 +160,17 @@ object NsdbSinkWriter {
     require(Try(new java.math.BigDecimal(defaultValueStr.getOrElse("0"))).isSuccess,
             s"value $defaultValueStr as default value is invalid, must be a number")
     defaultValueStr.map(new java.math.BigDecimal(_))
+  }
+
+  /**
+    * Validate if a provided string is a duration or not.
+    * @param configName the name of the config.
+    * @param configValue the optional string value.
+    */
+  def validateDuration(configName: String, configValue: Option[String]): Option[Duration] = {
+    require(Try(configValue.map(Duration.apply)).isSuccess,
+            s"value $configValue for $configName is not a valid duration")
+    configValue.map(Duration.apply)
   }
 
   /**

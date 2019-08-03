@@ -62,3 +62,20 @@ lazy val `nsdb-kafka-connect` = (project in file("."))
     javaOptions in Test += "-XX:ReservedCodeCacheSize=256m",
     javaOptions in Test += "-XX:MaxMetaspaceSize=512m"
   )
+  .settings(
+    assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeScala = true),
+    artifact in (Compile, assembly) := {
+      val art: Artifact = (artifact in (Compile, assembly)).value
+      art.withClassifier(Some(""))
+    },
+    addArtifact(artifact in (Compile, assembly), assembly),
+    test in assembly := {},
+    assemblyMergeStrategy in assembly := {
+      case PathList("META-INF", "io.netty.versions.properties") => MergeStrategy.first
+      case PathList("CHANGELOG.adoc")                           => MergeStrategy.first
+      case PathList("CHANGELOG.html")                           => MergeStrategy.first
+      case x =>
+        val oldStrategy = (assemblyMergeStrategy in assembly).value
+        oldStrategy(x)
+    }
+  )

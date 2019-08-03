@@ -20,7 +20,8 @@ import java.util.{Collection => JCollection, Map => JMap}
 
 import com.datamountaineer.kcql.Kcql
 import io.radicalbit.nsdb.api.scala.NSDB
-import io.radicalbit.nsdb.connector.kafka.sink.conf.NsdbConfigs
+import io.radicalbit.nsdb.connector.kafka.sink.NSDbSinkWriter.{validateDefaultValue, validateDuration}
+import io.radicalbit.nsdb.connector.kafka.sink.conf.NSDbConfigs
 import org.apache.kafka.common.utils.AppInfoParser
 import org.apache.kafka.connect.sink.{SinkRecord, SinkTask}
 import org.slf4j.LoggerFactory
@@ -29,31 +30,35 @@ import scala.collection.JavaConverters._
 import scala.concurrent.{Await, ExecutionContext}
 
 /**
-  * Nsdb Sink task.
+  * NSDb Sink task.
   */
-class NsdbSinkTask extends SinkTask {
-  private val log = LoggerFactory.getLogger(classOf[NsdbSinkTask])
+class NSDbSinkTask extends SinkTask {
+  private val log = LoggerFactory.getLogger(classOf[NSDbSinkTask])
 
-  private var writer: Option[NsdbSinkWriter] = None
+  private var writer: Option[NSDbSinkWriter] = None
 
   /**
     * Opens a new connection against Nsdb target and setup the writer.
     **/
   override def start(props: JMap[String, String]): Unit = {
-    log.info("Starting a {} task.", classOf[NsdbSinkTask].getSimpleName)
+    log.info("Starting a {} task.", classOf[NSDbSinkTask].getSimpleName)
     log.info("Properties are {}.", props)
 
     import scala.concurrent.duration._
 
     writer = Some(
-      new NsdbSinkWriter(
-        Await.result(NSDB.connect(props.get(NsdbConfigs.NSDB_HOST), props.get(NsdbConfigs.NSDB_PORT).toInt)(
+      new NSDbSinkWriter(
+        Await.result(NSDB.connect(props.get(NSDbConfigs.NSDB_HOST), props.get(NSDbConfigs.NSDB_PORT).toInt)(
                        ExecutionContext.global),
                      10.seconds),
-        kcqls = props.get(NsdbConfigs.NSDB_KCQL).split(";").map(Kcql.parse).groupBy(_.getSource),
-        globalDb = Option(props.get(NsdbConfigs.NSDB_DB)),
-        globalNamespace = Option(props.get(NsdbConfigs.NSDB_NAMESPACE)),
-        defaultValueStr = Option(props.get(NsdbConfigs.NSDB_DEFAULT_VALUE))
+        kcqls = props.get(NSDbConfigs.NSDB_KCQL).split(";").map(Kcql.parse).groupBy(_.getSource),
+        globalDb = Option(props.get(NSDbConfigs.NSDB_DB)),
+        globalNamespace = Option(props.get(NSDbConfigs.NSDB_NAMESPACE)),
+        defaultValue = validateDefaultValue(Option(props.get(NSDbConfigs.NSDB_DEFAULT_VALUE))),
+        retentionPolicy = validateDuration(NSDbConfigs.NSDB_METRIC_RETENTION_POLICY,
+                                           Option(props.get(NSDbConfigs.NSDB_METRIC_RETENTION_POLICY))),
+        shardInterval =
+          validateDuration(NSDbConfigs.NSDB_SHARD_INTERVAL, Option(props.get(NSDbConfigs.NSDB_SHARD_INTERVAL)))
       ))
   }
 

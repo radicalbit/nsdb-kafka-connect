@@ -27,7 +27,7 @@ Name  | Description  | Type  | Value
 name  |  Name of the connector | String  |  Anything unique across the Connect cluster
 topics  | The topics to sink | String | comma separated list of topics used in the connector
 tasks.max  | The number of tasks to be created across the connect cluster  | Int | Default value is 1
-connector.class  | Connector FQCN  |  String | io.radicalbit.nsdb.connector.kafka.sink.NsdbSinkConnector
+connector.class  | Connector FQCN  |  String | io.radicalbit.nsdb.connector.kafka.sink.NSDbSinkConnector
 
 ## Specific Nsdb Sink Configuration
 Name  | Description  | Type  | Value
@@ -37,7 +37,9 @@ nsdb.port  | Port of the NSDb instance to connect to | Int | default value is `7
 nsdb.kcql  | Kcql expressions used to map topic data to NSDb bits | String  | semicolon separated Kcql expressions
 nsdb.db  | NSDb db to use in case no mappig is provided in the Kcql | String  |  If a mapping is provided in the Kcql this config will be overridden
 nsdb.namespace  | NSDb db to use in case no mappig is provided in the Kcql | String  | If a mapping is provided in the Kcql this config will be overridden
-nsdb.defaultValue | default value | Numeric | if a value alias is provided in the Kcql expression this config will be ignored 
+nsdb.defaultValue | default value | Numeric | if a value alias is provided in the Kcql expression this config will be ignored
+nsdb.metric.retention.policy | NSDb custom retention policy | String | Custom NSDb retention policy applied to the metric specified in the Kcql statements formatted as a Scala Duration (e.g. 2 d, 2d, 2 days).<br>If this configuration is not provided, no retention policy will be applied to the metrics. 
+nsdb.shard.interval | NSDb custom shard interval policy | String | NSDb shard interval applied to the metric specified in the Kcql statements formatted as a Scala Duration (e.g. 2 d, 2d, 2 days).<br>If this configuration is not provided, the default shard interval will be applied to the metrics.
 
 ## KCQL Support
 
@@ -66,9 +68,11 @@ INSERT INTO bitC SELECT d as db, n as namespace, x AS a, y AS value, z as b, t a
 ## example
 ```bash
 echo '{"name":"manufacturing-nsdb-sink",
-"config": {"connector.class":"io.radicalbit.nsdb.connector.kafka.sink.NsdbSinkConnector",
+"config": {"connector.class":"io.radicalbit.nsdb.connector.kafka.sink.NSDbSinkConnector",
 "tasks.max":"1","nsdb.host":"nsdbhost",
 "topics":"topicA, topicB, topicC",
+"nsdb.metric.retention.policy": "2d",
+"nsdb.shard.interval": "2d",
 "nsdb.kcql":
 "INSERT INTO bitA SELECT x AS a, y AS value FROM topicA WITHTIMESTAMP z;
  INSERT INTO bitB SELECT x AS a, y AS value, z as c FROM topicB WITHTIMESTAMP sys_time();
