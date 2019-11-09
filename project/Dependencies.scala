@@ -31,7 +31,7 @@ object Dependencies {
   }
 
   object nsdb {
-    lazy val version   = "0.9.0-SNAPSHOT"
+    lazy val version   = "1.0.0-SNAPSHOT"
     lazy val namespace = "io.radicalbit.nsdb"
     lazy val scalaAPI  = namespace %% "nsdb-scala-api" % version
   }
