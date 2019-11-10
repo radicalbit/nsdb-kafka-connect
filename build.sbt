@@ -39,6 +39,7 @@ lazy val `nsdb-kafka-connect` = (project in file("."))
     )
   )
   .settings(libraryDependencies ++= Dependencies.libraries)
+  .settings(libraryDependencies += Dependencies.nsdb.scalaAPI.value)
   .settings(
     resolvers in ThisBuild ++= Seq(
       "Radicalbit Public Releases" at "https://tools.radicalbit.io/artifactory/public-release/",

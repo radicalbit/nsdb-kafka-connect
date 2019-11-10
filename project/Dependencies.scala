@@ -15,6 +15,7 @@
  */
 
 import sbt._
+import Keys._
 
 object Dependencies {
 
@@ -31,9 +32,8 @@ object Dependencies {
   }
 
   object nsdb {
-    lazy val version   = "1.0.0-SNAPSHOT"
     lazy val namespace = "io.radicalbit.nsdb"
-    lazy val scalaAPI  = namespace %% "nsdb-scala-api" % version
+    lazy val  scalaAPI = Def.setting { namespace %% "nsdb-scala-api" % (ThisBuild / version).value}
   }
 
   object scalatest {
@@ -44,7 +44,6 @@ object Dependencies {
 
   lazy val libraries = Seq(
     kafka.connect % Provided,
-    nsdb.scalaAPI,
     kcql.kcql,
     scalatest.core % Test
   )
