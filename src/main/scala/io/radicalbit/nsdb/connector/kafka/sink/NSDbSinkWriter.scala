@@ -40,7 +40,8 @@ class NSDbSinkWriter(connection: NSDB,
                      globalNamespace: Option[String],
                      defaultValue: Option[java.math.BigDecimal],
                      retentionPolicy: Option[Duration],
-                     shardInterval: Option[Duration])
+                     shardInterval: Option[Duration],
+                     semanticDelivery: String)
     extends StrictLogging {
 
   logger.info("Initialising NSDb writer")
@@ -146,11 +147,28 @@ class NSDbSinkWriter(connection: NSDB,
 
 object NSDbSinkWriter {
 
+  import io.radicalbit.nsdb.connector.kafka.sink.conf.Constants._
+
   private val logger = Logger(LoggerFactory.getLogger(classOf[NSDbSinkWriter]))
 
   private val defaultTimestampKeywords = Set("now", "now()", "sys_time", "sys_time()", "current_time", "current_time()")
 
   private def getFieldName(parent: Option[String], field: String) = parent.map(p => s"$p.$field").getOrElse(field)
+
+  /**
+    * Validate the semantic delivery property according to possible fixed values
+    * @param configName
+    * @param semanticDelivery
+    * @return
+    */
+  def validateSemanticDelivery(configName: String, semanticDelivery: String): String = {
+    require(
+      SemanticDelivery.possibleValues.contains(semanticDelivery.toLowerCase),
+      s"""value $semanticDelivery for $configName is not valid. Possible values are: ${SemanticDelivery.possibleValues
+        .mkString(",")}"""
+    )
+    semanticDelivery.toLowerCase
+  }
 
   /**
     * this custom validation has put here because kafka connect does not allow to specify more than one type at once.

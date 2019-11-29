@@ -50,6 +50,10 @@ object NSDbConfigs {
   val NSDB_SHARD_INTERVAL     = "nsdb.shard.interval"
   val NSDB_SHARD_INTERVAL_DOC = "NSDb shard interval (optional)"
 
+  val NSDB_SEMANTIC_DELIVERY         = "nsdb.semantic.delivery"
+  val NSDB_SEMANTIC_DELIVERY_DOC     = "NSDb semantic delivery (optional) [at_most_once (default), at_least_once]"
+  val NSDB_SEMANTIC_DELIVERY_DEFAULT = Constants.SemanticDelivery.AtMostOnce
+
   /**
     * @return sink expected configuration:
     *
@@ -120,5 +124,10 @@ object NSDbConfigs {
               2,
               ConfigDef.Width.MEDIUM,
               NSDB_SHARD_INTERVAL)
+      .define(NSDB_SEMANTIC_DELIVERY,
+              Type.STRING,
+              NSDB_SEMANTIC_DELIVERY_DEFAULT,
+              Importance.MEDIUM,
+              NSDB_SEMANTIC_DELIVERY_DOC)
 
 }

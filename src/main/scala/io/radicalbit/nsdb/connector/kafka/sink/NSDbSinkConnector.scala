@@ -81,9 +81,10 @@ class NSDbSinkConnector extends SinkConnector {
       .filterNot(g => g.isEmpty)
       .map(g => {
         val taskConfigs: java.util.Map[String, String] = new java.util.HashMap[String, String]
-        //put the default host and port to be available in task in case they are not provided.
+        //put the default host, port and semantic delivery to be available in task in case they are not provided.
         taskConfigs.put(NSDbConfigs.NSDB_HOST, NSDbConfigs.NSDB_HOST_DEFAULT)
         taskConfigs.put(NSDbConfigs.NSDB_PORT, NSDbConfigs.NSDB_PORT_DEFAULT.toString)
+        taskConfigs.put(NSDbConfigs.NSDB_SEMANTIC_DELIVERY, NSDbConfigs.NSDB_SEMANTIC_DELIVERY_DEFAULT)
         taskConfigs.putAll(configProps)
         taskConfigs.put(NSDbConfigs.NSDB_KCQL, g.asScala.mkString(";")) //overwrite
         taskConfigs

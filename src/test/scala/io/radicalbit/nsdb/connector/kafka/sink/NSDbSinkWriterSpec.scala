@@ -310,6 +310,16 @@ class NSDbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
     bit shouldBe expectedBit
   }
 
+  "SinkRecordConversion" should "validate semantic delivery according to the possible values" in {
+    Try {
+      NSDbSinkWriter.validateSemanticDelivery("testField", "AT_LEAST_ONCE")
+    } shouldBe Success("at_least_once")
+
+    Try {
+      NSDbSinkWriter.validateSemanticDelivery("testField", "invalid-field")
+    }.isFailure shouldBe true
+  }
+
   "SinkRecordConversion" should "not convert records given a kcql without a value alias and an invalid default value" in {
     Try {
       NSDbSinkWriter.validateDefaultValue(Some("1"))

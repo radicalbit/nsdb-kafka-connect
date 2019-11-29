@@ -31,4 +31,11 @@ object Constants {
     final lazy val NamespaceFieldName = "namespace"
   }
 
+  object SemanticDelivery {
+    final lazy val AtMostOnce  = "at_most_once"
+    final lazy val AtLeastOnce = "at_least_once"
+
+    final lazy val possibleValues = List(AtMostOnce, AtLeastOnce)
+  }
+
 }
