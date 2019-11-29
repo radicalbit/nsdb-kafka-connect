@@ -31,11 +31,25 @@ object Constants {
     final lazy val NamespaceFieldName = "namespace"
   }
 
-  object SemanticDelivery {
-    final lazy val AtMostOnce  = "at_most_once"
-    final lazy val AtLeastOnce = "at_least_once"
+  sealed trait SemanticDelivery {
+    def value: String
+  }
+  case object AtMostOnce extends SemanticDelivery {
+    val value: String = "at_most_once"
+  }
+  case object AtLeastOnce extends SemanticDelivery {
+    val value: String = "at_least_once"
+  }
 
-    final lazy val possibleValues = List(AtMostOnce, AtLeastOnce)
+  object SemanticDelivery {
+    final lazy val possibleValues = List(AtMostOnce.value, AtLeastOnce.value)
+
+    def parse(s: String): Option[SemanticDelivery] =
+      s.toLowerCase match {
+        case AtMostOnce.value  => Some(AtMostOnce)
+        case AtLeastOnce.value => Some(AtLeastOnce)
+        case _                 => None
+      }
   }
 
 }

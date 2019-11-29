@@ -52,7 +52,7 @@ object NSDbConfigs {
 
   val NSDB_SEMANTIC_DELIVERY         = "nsdb.semantic.delivery"
   val NSDB_SEMANTIC_DELIVERY_DOC     = "NSDb semantic delivery (optional) [at_most_once (default), at_least_once]"
-  val NSDB_SEMANTIC_DELIVERY_DEFAULT = Constants.SemanticDelivery.AtMostOnce
+  val NSDB_SEMANTIC_DELIVERY_DEFAULT = Constants.AtMostOnce.value
 
   /**
     * @return sink expected configuration:

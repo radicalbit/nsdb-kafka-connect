@@ -19,6 +19,7 @@ package io.radicalbit.nsdb.connector.kafka.sink
 import com.datamountaineer.kcql.Kcql
 import com.typesafe.scalalogging.{Logger, StrictLogging}
 import io.radicalbit.nsdb.api.scala.{Bit, Db, NSDB}
+import io.radicalbit.nsdb.connector.kafka.sink.conf.Constants.SemanticDelivery
 import org.apache.kafka.connect.data.Schema.Type
 import org.apache.kafka.connect.data._
 import org.apache.kafka.connect.sink.SinkRecord
@@ -41,7 +42,7 @@ class NSDbSinkWriter(connection: NSDB,
                      defaultValue: Option[java.math.BigDecimal],
                      retentionPolicy: Option[Duration],
                      shardInterval: Option[Duration],
-                     semanticDelivery: String)
+                     semanticDelivery: SemanticDelivery)
     extends StrictLogging {
 
   logger.info("Initialising NSDb writer")
@@ -158,16 +159,17 @@ object NSDbSinkWriter {
   /**
     * Validate the semantic delivery property according to possible fixed values
     * @param configName
-    * @param semanticDelivery
+    * @param configValue
     * @return
     */
-  def validateSemanticDelivery(configName: String, semanticDelivery: String): String = {
+  def validateSemanticDelivery(configName: String, configValue: String): SemanticDelivery = {
+    val maybeProp = SemanticDelivery.parse(configValue)
     require(
-      SemanticDelivery.possibleValues.contains(semanticDelivery.toLowerCase),
-      s"""value $semanticDelivery for $configName is not valid. Possible values are: ${SemanticDelivery.possibleValues
-        .mkString(",")}"""
+      maybeProp.isDefined,
+      s"""value $configValue for $configName is not valid. Possible values are: ${SemanticDelivery.possibleValues
+        .mkString(", ")}"""
     )
-    semanticDelivery.toLowerCase
+    maybeProp.get
   }
 
   /**
