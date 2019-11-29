@@ -42,7 +42,7 @@ class NSDbSinkWriter(connection: NSDB,
                      defaultValue: Option[java.math.BigDecimal],
                      retentionPolicy: Option[Duration],
                      shardInterval: Option[Duration],
-                     semanticDelivery: SemanticDelivery)
+                     semanticDelivery: Option[SemanticDelivery])
     extends StrictLogging {
 
   logger.info("Initialising NSDb writer")
@@ -162,14 +162,14 @@ object NSDbSinkWriter {
     * @param configValue
     * @return
     */
-  def validateSemanticDelivery(configName: String, configValue: String): SemanticDelivery = {
+  def validateSemanticDelivery(configName: String, configValue: String): Option[SemanticDelivery] = {
     val maybeProp = SemanticDelivery.parse(configValue)
     require(
       maybeProp.isDefined,
       s"""value $configValue for $configName is not valid. Possible values are: ${SemanticDelivery.possibleValues
         .mkString(", ")}"""
     )
-    maybeProp.get
+    maybeProp
   }
 
   /**

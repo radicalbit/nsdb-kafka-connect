@@ -314,7 +314,7 @@ class NSDbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
   "SinkRecordConversion" should "validate semantic delivery according to the possible values" in {
     Try {
       NSDbSinkWriter.validateSemanticDelivery("testField", "AT_LEAST_ONCE")
-    } shouldBe Success(AtLeastOnce)
+    } shouldBe Success(Some(AtLeastOnce))
 
     Try {
       NSDbSinkWriter.validateSemanticDelivery("testField", "invalid-field")
