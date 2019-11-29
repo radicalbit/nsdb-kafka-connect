@@ -19,6 +19,7 @@ package io.radicalbit.nsdb.connector.kafka.sink
 import com.datamountaineer.kcql.Kcql
 import com.typesafe.scalalogging.{Logger, StrictLogging}
 import io.radicalbit.nsdb.api.scala.{Bit, Db, NSDB}
+import io.radicalbit.nsdb.connector.kafka.sink.conf.Constants.SemanticDelivery
 import org.apache.kafka.connect.data.Schema.Type
 import org.apache.kafka.connect.data._
 import org.apache.kafka.connect.sink.SinkRecord
@@ -40,7 +41,8 @@ class NSDbSinkWriter(connection: NSDB,
                      globalNamespace: Option[String],
                      defaultValue: Option[java.math.BigDecimal],
                      retentionPolicy: Option[Duration],
-                     shardInterval: Option[Duration])
+                     shardInterval: Option[Duration],
+                     semanticDelivery: Option[SemanticDelivery])
     extends StrictLogging {
 
   logger.info("Initialising NSDb writer")
@@ -146,11 +148,29 @@ class NSDbSinkWriter(connection: NSDB,
 
 object NSDbSinkWriter {
 
+  import io.radicalbit.nsdb.connector.kafka.sink.conf.Constants._
+
   private val logger = Logger(LoggerFactory.getLogger(classOf[NSDbSinkWriter]))
 
   private val defaultTimestampKeywords = Set("now", "now()", "sys_time", "sys_time()", "current_time", "current_time()")
 
   private def getFieldName(parent: Option[String], field: String) = parent.map(p => s"$p.$field").getOrElse(field)
+
+  /**
+    * Validate the semantic delivery property according to possible fixed values
+    * @param configName
+    * @param configValue
+    * @return
+    */
+  def validateSemanticDelivery(configName: String, configValue: String): Option[SemanticDelivery] = {
+    val maybeProp = SemanticDelivery.parse(configValue)
+    require(
+      maybeProp.isDefined,
+      s"""value $configValue for $configName is not valid. Possible values are: ${SemanticDelivery.possibleValues
+        .mkString(", ")}"""
+    )
+    maybeProp
+  }
 
   /**
     * this custom validation has put here because kafka connect does not allow to specify more than one type at once.

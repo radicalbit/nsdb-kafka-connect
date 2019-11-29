@@ -20,7 +20,7 @@ import java.util.{Collection => JCollection, Map => JMap}
 
 import com.datamountaineer.kcql.Kcql
 import io.radicalbit.nsdb.api.scala.NSDB
-import io.radicalbit.nsdb.connector.kafka.sink.NSDbSinkWriter.{validateDefaultValue, validateDuration}
+import io.radicalbit.nsdb.connector.kafka.sink.NSDbSinkWriter._
 import io.radicalbit.nsdb.connector.kafka.sink.conf.NSDbConfigs
 import org.apache.kafka.common.utils.AppInfoParser
 import org.apache.kafka.connect.sink.{SinkRecord, SinkTask}
@@ -48,9 +48,9 @@ class NSDbSinkTask extends SinkTask {
 
     writer = Some(
       new NSDbSinkWriter(
-        Await.result(NSDB.connect(props.get(NSDbConfigs.NSDB_HOST), props.get(NSDbConfigs.NSDB_PORT).toInt)(
-                       ExecutionContext.global),
-                     10.seconds),
+        connection = Await.result(NSDB.connect(props.get(NSDbConfigs.NSDB_HOST),
+                                               props.get(NSDbConfigs.NSDB_PORT).toInt)(ExecutionContext.global),
+                                  10.seconds),
         kcqls = props.get(NSDbConfigs.NSDB_KCQL).split(";").map(Kcql.parse).groupBy(_.getSource),
         globalDb = Option(props.get(NSDbConfigs.NSDB_DB)),
         globalNamespace = Option(props.get(NSDbConfigs.NSDB_NAMESPACE)),
@@ -58,7 +58,9 @@ class NSDbSinkTask extends SinkTask {
         retentionPolicy = validateDuration(NSDbConfigs.NSDB_METRIC_RETENTION_POLICY,
                                            Option(props.get(NSDbConfigs.NSDB_METRIC_RETENTION_POLICY))),
         shardInterval =
-          validateDuration(NSDbConfigs.NSDB_SHARD_INTERVAL, Option(props.get(NSDbConfigs.NSDB_SHARD_INTERVAL)))
+          validateDuration(NSDbConfigs.NSDB_SHARD_INTERVAL, Option(props.get(NSDbConfigs.NSDB_SHARD_INTERVAL))),
+        semanticDelivery =
+          validateSemanticDelivery(NSDbConfigs.NSDB_SEMANTIC_DELIVERY, props.get(NSDbConfigs.NSDB_SEMANTIC_DELIVERY))
       ))
   }
 

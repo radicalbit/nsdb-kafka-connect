@@ -18,6 +18,7 @@ package io.radicalbit.nsdb.connector.kafka.sink
 
 import com.typesafe.scalalogging.{Logger, StrictLogging}
 import io.radicalbit.nsdb.api.scala.{Bit, Db}
+import io.radicalbit.nsdb.connector.kafka.sink.conf.Constants.AtLeastOnce
 import org.apache.kafka.connect.data._
 import org.apache.kafka.connect.sink.SinkRecord
 import org.scalatest.{FlatSpec, Matchers, OneInstancePerTest}
@@ -308,6 +309,16 @@ class NSDbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
         .dimension("d1", "d1")
 
     bit shouldBe expectedBit
+  }
+
+  "SinkRecordConversion" should "validate semantic delivery according to the possible values" in {
+    Try {
+      NSDbSinkWriter.validateSemanticDelivery("testField", "AT_LEAST_ONCE")
+    } shouldBe Success(Some(AtLeastOnce))
+
+    Try {
+      NSDbSinkWriter.validateSemanticDelivery("testField", "invalid-field")
+    }.isFailure shouldBe true
   }
 
   "SinkRecordConversion" should "not convert records given a kcql without a value alias and an invalid default value" in {
