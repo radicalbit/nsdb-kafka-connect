@@ -46,11 +46,16 @@ class NSDbSinkTask extends SinkTask {
 
     import scala.concurrent.duration._
 
+    val timeout =
+      validateDuration(NSDbConfigs.NSDB_TIMEOUT, Option(props.get(NSDbConfigs.NSDB_TIMEOUT)))
+        .getOrElse(Duration(NSDbConfigs.NSDB_TIMEOUT_DEFAULT))
+
     writer = Some(
       new NSDbSinkWriter(
+        // NOTE: it's fine to directly convert port into integer since props are validated when connector is deployed
         connection = Await.result(NSDB.connect(props.get(NSDbConfigs.NSDB_HOST),
                                                props.get(NSDbConfigs.NSDB_PORT).toInt)(ExecutionContext.global),
-                                  10.seconds),
+                                  timeout),
         kcqls = props.get(NSDbConfigs.NSDB_KCQL).split(";").map(Kcql.parse).groupBy(_.getSource),
         globalDb = Option(props.get(NSDbConfigs.NSDB_DB)),
         globalNamespace = Option(props.get(NSDbConfigs.NSDB_NAMESPACE)),

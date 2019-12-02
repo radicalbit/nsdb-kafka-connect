@@ -54,6 +54,10 @@ object NSDbConfigs {
   val NSDB_SEMANTIC_DELIVERY_DOC     = "NSDb semantic delivery (optional) [at_most_once (default), at_least_once]"
   val NSDB_SEMANTIC_DELIVERY_DEFAULT = Constants.AtMostOnce.value
 
+  val NSDB_TIMEOUT         = "nsdb.timeout"
+  val NSDB_TIMEOUT_DOC     = "Timeout used for test NSDb connection"
+  val NSDB_TIMEOUT_DEFAULT = "10 seconds"
+
   /**
     * @return sink expected configuration:
     *
@@ -71,7 +75,11 @@ object NSDbConfigs {
     *
     *         - nsdb.metric.retention.policy the retention policy applied to the metric specified in the kcql.
     *
-    *         - nsdb.shard.interval the shatd interval applied to the metric specified in the kcql.
+    *         - nsdb.shard.interval the shard interval applied to the metric specified in the kcql.
+    *
+    *         - nsdb.semantic.delivery the semantic delivery for writing data into nsdb
+    *
+    *         - nsdb.timeout timeout used for test nsdb connection
     */
   def configDef: ConfigDef =
     new ConfigDef()
@@ -129,5 +137,6 @@ object NSDbConfigs {
               NSDB_SEMANTIC_DELIVERY_DEFAULT,
               Importance.MEDIUM,
               NSDB_SEMANTIC_DELIVERY_DOC)
+      .define(NSDB_TIMEOUT, Type.STRING, NSDB_TIMEOUT_DEFAULT, Importance.MEDIUM, NSDB_TIMEOUT_DOC)
 
 }
