@@ -101,5 +101,11 @@ class NSDbConfigsSpec extends FlatSpec with Matchers with OneInstancePerTest {
     configKeys.get(NSDbConfigs.NSDB_SEMANTIC_DELIVERY).importance shouldBe Importance.MEDIUM
     configKeys.get(NSDbConfigs.NSDB_SEMANTIC_DELIVERY).documentation shouldBe NSDbConfigs.NSDB_SEMANTIC_DELIVERY_DOC
 
+    configKeys.get(NSDbConfigs.NSDB_TIMEOUT).name shouldBe NSDbConfigs.NSDB_TIMEOUT
+    configKeys.get(NSDbConfigs.NSDB_TIMEOUT).`type` shouldBe Type.STRING
+    configKeys.get(NSDbConfigs.NSDB_TIMEOUT).defaultValue shouldBe NSDbConfigs.NSDB_TIMEOUT_DEFAULT
+    configKeys.get(NSDbConfigs.NSDB_TIMEOUT).importance shouldBe Importance.MEDIUM
+    configKeys.get(NSDbConfigs.NSDB_TIMEOUT).documentation shouldBe NSDbConfigs.NSDB_TIMEOUT_DOC
+
   }
 }
