@@ -19,10 +19,12 @@ package io.radicalbit.nsdb.connector.kafka.sink
 import com.typesafe.scalalogging.{Logger, StrictLogging}
 import io.radicalbit.nsdb.api.scala.{Bit, Db}
 import io.radicalbit.nsdb.connector.kafka.sink.conf.Constants.AtLeastOnce
+import io.radicalbit.nsdb.rpc.response.RPCInsertResult
 import org.apache.kafka.connect.data._
 import org.apache.kafka.connect.sink.SinkRecord
 import org.scalatest.{FlatSpec, Matchers, OneInstancePerTest}
 
+import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 import scala.util.{Success, Try}
 
@@ -309,6 +311,40 @@ class NSDbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
         .dimension("d1", "d1")
 
     bit shouldBe expectedBit
+  }
+
+  "SinkRecordConversion" should "thrown an Exception whether one of the result has 'completedSuccessfully' set to false" in {
+    import scala.concurrent.ExecutionContext.Implicits.global
+
+    def futureResult = {
+      loggerImpl.info("Evaluating the future...")
+      Future(
+        List(RPCInsertResult(completedSuccessfully = true), RPCInsertResult(completedSuccessfully = false))
+      )
+    }
+
+    an[RuntimeException] shouldBe thrownBy(
+      NSDbSinkWriter.writeWithDeliveryPolicy(Some(AtLeastOnce), futureResult, None))
+  }
+
+  "SinkRecordConversion" should "correctly return list of successfully result" in {
+    import scala.concurrent.ExecutionContext.Implicits.global
+
+    val result       = List(RPCInsertResult(completedSuccessfully = true), RPCInsertResult(completedSuccessfully = true))
+    def futureResult = Future(result)
+
+    NSDbSinkWriter.writeWithDeliveryPolicy(Some(AtLeastOnce), futureResult, None) shouldBe result
+  }
+
+  "SinkRecordConversion" should "thrown an Exception whether the future fails" in {
+
+    def futureResult = {
+      loggerImpl.info("Evaluating the future...")
+      Future.failed[List[RPCInsertResult]](new RuntimeException("Any Reason Exception"))
+    }
+
+    an[RuntimeException] shouldBe thrownBy(
+      NSDbSinkWriter.writeWithDeliveryPolicy(Some(AtLeastOnce), futureResult, None))
   }
 
   "SinkRecordConversion" should "validate semantic delivery according to the possible values" in {

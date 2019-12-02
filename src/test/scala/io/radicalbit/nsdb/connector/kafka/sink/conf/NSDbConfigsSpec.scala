@@ -101,5 +101,15 @@ class NSDbConfigsSpec extends FlatSpec with Matchers with OneInstancePerTest {
     configKeys.get(NSDbConfigs.NSDB_SEMANTIC_DELIVERY).importance shouldBe Importance.MEDIUM
     configKeys.get(NSDbConfigs.NSDB_SEMANTIC_DELIVERY).documentation shouldBe NSDbConfigs.NSDB_SEMANTIC_DELIVERY_DOC
 
+    configKeys.get(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRIES).name shouldBe NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRIES
+    configKeys.get(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRIES).`type` shouldBe Type.INT
+    configKeys
+      .get(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRIES)
+      .defaultValue shouldBe NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRIES_DEFAULT
+    configKeys.get(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRIES).importance shouldBe Importance.LOW
+    configKeys
+      .get(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRIES)
+      .documentation shouldBe NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRIES_DOC
+
   }
 }

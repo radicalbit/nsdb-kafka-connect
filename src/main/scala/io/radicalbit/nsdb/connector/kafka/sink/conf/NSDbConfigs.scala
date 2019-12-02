@@ -54,6 +54,10 @@ object NSDbConfigs {
   val NSDB_SEMANTIC_DELIVERY_DOC     = "NSDb semantic delivery (optional) [at_most_once (default), at_least_once]"
   val NSDB_SEMANTIC_DELIVERY_DEFAULT = Constants.AtMostOnce.value
 
+  val NSDB_AT_LEAST_ONCE_RETRIES         = "nsdb.at.least.once.retry"
+  val NSDB_AT_LEAST_ONCE_RETRIES_DOC     = "Number of writing retries when AT_LEAST_ONCE semantic is set"
+  val NSDB_AT_LEAST_ONCE_RETRIES_DEFAULT = 3
+
   /**
     * @return sink expected configuration:
     *
@@ -129,5 +133,10 @@ object NSDbConfigs {
               NSDB_SEMANTIC_DELIVERY_DEFAULT,
               Importance.MEDIUM,
               NSDB_SEMANTIC_DELIVERY_DOC)
+      .define(NSDB_AT_LEAST_ONCE_RETRIES,
+              Type.INT,
+              NSDB_AT_LEAST_ONCE_RETRIES_DEFAULT,
+              Importance.LOW,
+              NSDB_AT_LEAST_ONCE_RETRIES_DOC)
 
 }

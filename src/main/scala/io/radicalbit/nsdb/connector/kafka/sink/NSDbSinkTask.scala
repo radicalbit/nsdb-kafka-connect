@@ -60,7 +60,8 @@ class NSDbSinkTask extends SinkTask {
         shardInterval =
           validateDuration(NSDbConfigs.NSDB_SHARD_INTERVAL, Option(props.get(NSDbConfigs.NSDB_SHARD_INTERVAL))),
         semanticDelivery =
-          validateSemanticDelivery(NSDbConfigs.NSDB_SEMANTIC_DELIVERY, props.get(NSDbConfigs.NSDB_SEMANTIC_DELIVERY))
+          validateSemanticDelivery(NSDbConfigs.NSDB_SEMANTIC_DELIVERY, props.get(NSDbConfigs.NSDB_SEMANTIC_DELIVERY)),
+        retries = Option(props.get(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRIES).toInt)
       ))
   }
 
