@@ -86,6 +86,7 @@ class NSDbSinkConnector extends SinkConnector {
         taskConfigs.put(NSDbConfigs.NSDB_PORT, NSDbConfigs.NSDB_PORT_DEFAULT.toString)
         taskConfigs.put(NSDbConfigs.NSDB_SEMANTIC_DELIVERY, NSDbConfigs.NSDB_SEMANTIC_DELIVERY_DEFAULT)
         taskConfigs.put(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRIES, NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRIES_DEFAULT.toString)
+        taskConfigs.put(NSDbConfigs.NSDB_AT_LEAST_ONCE_SLEEP, NSDbConfigs.NSDB_AT_LEAST_ONCE_SLEEP_DEFAULT.toString)
         taskConfigs.putAll(configProps)
         taskConfigs.put(NSDbConfigs.NSDB_KCQL, g.asScala.mkString(";")) //overwrite
         taskConfigs

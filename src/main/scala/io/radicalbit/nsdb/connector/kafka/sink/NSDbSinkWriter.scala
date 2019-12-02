@@ -47,7 +47,8 @@ class NSDbSinkWriter(connection: NSDB,
                      retentionPolicy: Option[Duration],
                      shardInterval: Option[Duration],
                      semanticDelivery: Option[SemanticDelivery],
-                     retries: Option[Int])
+                     retries: Option[Int],
+                     sleep: Option[Duration])
     extends StrictLogging {
 
   logger.info("Initialising NSDb writer")
@@ -141,7 +142,7 @@ class NSDbSinkWriter(connection: NSDB,
           Future(convertedBit)
       }))
 
-      writeWithDeliveryPolicy(semanticDelivery, bitSeq.flatMap(connection.write), retries)
+      writeWithDeliveryPolicy(semanticDelivery, bitSeq.flatMap(connection.write), retries, sleep)
 
       logger.debug("Wrote {} to NSDb.", recordMaps.length)
     })
@@ -159,23 +160,28 @@ object NSDbSinkWriter {
 
   private def getFieldName(parent: Option[String], field: String) = parent.map(p => s"$p.$field").getOrElse(field)
 
-  private def policy(maxRetries: Int) = RetryPolicies.limitRetries(maxRetries - 1)
-
-  private def onFailure(throwable: Throwable, details: RetryDetails): Future[Unit] = {
-    logger.debug(throwable.getMessage)
-    Sleep[Future].sleep(1000.milliseconds)
-  }
-
   private case class WriteFailureException(msg: String) extends RuntimeException(msg)
 
   def writeWithDeliveryPolicy(semanticDelivery: Option[SemanticDelivery],
                               fResult: => Future[List[RPCInsertResult]],
-                              retries: Option[Int]) = {
+                              maxRetries: Option[Int],
+                              sleep: Option[Duration]) = {
+
+    val policy = RetryPolicies.limitRetries(maxRetries.getOrElse(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRIES_DEFAULT) - 1)
+
+    val finiteDurationSleep: FiniteDuration = {
+      val duration = sleep.getOrElse(Duration(NSDbConfigs.NSDB_AT_LEAST_ONCE_SLEEP_DEFAULT))
+      FiniteDuration(duration._1, duration._2)
+    }
+    def onFailure(throwable: Throwable, details: RetryDetails): Future[Unit] = {
+      logger.debug(throwable.getMessage)
+      Sleep[Future].sleep(finiteDurationSleep)
+    }
+
     semanticDelivery match {
       case Some(AtLeastOnce) =>
         Await.result(
-          retryingOnAllErrors.apply(policy(retries.getOrElse(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRIES_DEFAULT)),
-                                    onFailure)(fResult.flatMap {
+          retryingOnAllErrors.apply(policy, onFailure)(fResult.flatMap {
             case rPCInsertResults if !rPCInsertResults.forall(_.completedSuccessfully) =>
               Future.failed(WriteFailureException("Field 'completedSuccessfully' returns false"))
             case rPCInsertResults =>

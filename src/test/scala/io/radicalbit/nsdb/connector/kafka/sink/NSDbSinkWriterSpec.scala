@@ -324,7 +324,7 @@ class NSDbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
     }
 
     an[RuntimeException] shouldBe thrownBy(
-      NSDbSinkWriter.writeWithDeliveryPolicy(Some(AtLeastOnce), futureResult, None))
+      NSDbSinkWriter.writeWithDeliveryPolicy(Some(AtLeastOnce), futureResult, None, None))
   }
 
   "SinkRecordConversion" should "correctly return list of successfully result" in {
@@ -333,7 +333,7 @@ class NSDbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
     val result       = List(RPCInsertResult(completedSuccessfully = true), RPCInsertResult(completedSuccessfully = true))
     def futureResult = Future(result)
 
-    NSDbSinkWriter.writeWithDeliveryPolicy(Some(AtLeastOnce), futureResult, None) shouldBe result
+    NSDbSinkWriter.writeWithDeliveryPolicy(Some(AtLeastOnce), futureResult, None, None) shouldBe result
   }
 
   "SinkRecordConversion" should "thrown an Exception whether the future fails" in {
@@ -344,7 +344,7 @@ class NSDbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
     }
 
     an[RuntimeException] shouldBe thrownBy(
-      NSDbSinkWriter.writeWithDeliveryPolicy(Some(AtLeastOnce), futureResult, None))
+      NSDbSinkWriter.writeWithDeliveryPolicy(Some(AtLeastOnce), futureResult, None, None))
   }
 
   "SinkRecordConversion" should "validate semantic delivery according to the possible values" in {
@@ -395,6 +395,10 @@ class NSDbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
     Try {
       NSDbSinkWriter.validateDuration("testField", Some("2days"))
     } shouldBe Success(Some(Duration("2days")))
+
+    Try {
+      NSDbSinkWriter.validateDuration("testField", Some("1500 milliseconds"))
+    } shouldBe Success(Some(Duration("1500 milliseconds")))
   }
 
   "SinkRecordConversion" should "successfully convert records given a kcql without a value alias and a default value" in {
