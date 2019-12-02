@@ -58,9 +58,9 @@ object NSDbConfigs {
   val NSDB_AT_LEAST_ONCE_RETRIES_DOC     = "Number of writing retries when AT_LEAST_ONCE semantic is set"
   val NSDB_AT_LEAST_ONCE_RETRIES_DEFAULT = 10
 
-  val NSDB_AT_LEAST_ONCE_SLEEP         = "nsdb.at.least.once.sleep"
-  val NSDB_AT_LEAST_ONCE_SLEEP_DOC     = "Time to sleep from a retry to anther when AT_LEAST_ONCE semantic is set"
-  val NSDB_AT_LEAST_ONCE_SLEEP_DEFAULT = "1500 milliseconds"
+  val NSDB_AT_LEAST_ONCE_RETRY_INTERVAL         = "nsdb.at.least.once.sleep"
+  val NSDB_AT_LEAST_ONCE_RETRY_INTERVAL_DOC     = "Time to sleep from a retry to anther when AT_LEAST_ONCE semantic is set"
+  val NSDB_AT_LEAST_ONCE_RETRY_INTERVAL_DEFAULT = "500 milliseconds"
 
   /**
     * @return sink expected configuration:
@@ -142,10 +142,10 @@ object NSDbConfigs {
               NSDB_AT_LEAST_ONCE_RETRIES_DEFAULT,
               Importance.LOW,
               NSDB_AT_LEAST_ONCE_RETRIES_DOC)
-      .define(NSDB_AT_LEAST_ONCE_SLEEP,
+      .define(NSDB_AT_LEAST_ONCE_RETRY_INTERVAL,
               Type.STRING,
-              NSDB_AT_LEAST_ONCE_SLEEP_DEFAULT,
+              NSDB_AT_LEAST_ONCE_RETRY_INTERVAL_DEFAULT,
               Importance.LOW,
-              NSDB_AT_LEAST_ONCE_SLEEP_DOC)
+              NSDB_AT_LEAST_ONCE_RETRY_INTERVAL_DOC)
 
 }

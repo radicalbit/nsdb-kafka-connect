@@ -170,7 +170,7 @@ object NSDbSinkWriter {
     val policy = RetryPolicies.limitRetries(maxRetries.getOrElse(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRIES_DEFAULT) - 1)
 
     val finiteDurationSleep: FiniteDuration = {
-      val duration = sleep.getOrElse(Duration(NSDbConfigs.NSDB_AT_LEAST_ONCE_SLEEP_DEFAULT))
+      val duration = sleep.getOrElse(Duration(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRY_INTERVAL_DEFAULT))
       FiniteDuration(duration._1, duration._2)
     }
     def onFailure(throwable: Throwable, details: RetryDetails): Future[Unit] = {
