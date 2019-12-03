@@ -21,7 +21,6 @@ import com.datamountaineer.kcql.Kcql
 import com.typesafe.scalalogging.{Logger, StrictLogging}
 import io.radicalbit.nsdb.api.scala.{Bit, Db, NSDB}
 import io.radicalbit.nsdb.connector.kafka.sink.conf.Constants._
-import io.radicalbit.nsdb.connector.kafka.sink.conf.NSDbConfigs
 import io.radicalbit.nsdb.rpc.response.RPCInsertResult
 import org.apache.kafka.connect.data.Schema.Type
 import org.apache.kafka.connect.data._
@@ -47,8 +46,9 @@ class NSDbSinkWriter(connection: NSDB,
                      retentionPolicy: Option[Duration],
                      shardInterval: Option[Duration],
                      semanticDelivery: Option[SemanticDelivery],
-                     retries: Option[Int],
-                     sleep: Option[Duration])
+                     retries: Int,
+                     retryInterval: Duration,
+                     timeout: Duration)
     extends StrictLogging {
 
   logger.info("Initialising NSDb writer")
@@ -142,7 +142,7 @@ class NSDbSinkWriter(connection: NSDB,
           Future(convertedBit)
       }))
 
-      writeWithDeliveryPolicy(semanticDelivery, bitSeq.flatMap(connection.write), retries, sleep)
+      writeWithDeliveryPolicy(semanticDelivery, bitSeq.flatMap(connection.write), retries, retryInterval, timeout)
 
       logger.debug("Wrote {} to NSDb.", recordMaps.length)
     })
@@ -164,15 +164,14 @@ object NSDbSinkWriter {
 
   def writeWithDeliveryPolicy(semanticDelivery: Option[SemanticDelivery],
                               fResult: => Future[List[RPCInsertResult]],
-                              maxRetries: Option[Int],
-                              sleep: Option[Duration]) = {
+                              maxRetries: Int,
+                              retryInterval: Duration,
+                              timeout: Duration) = {
 
-    val policy = RetryPolicies.limitRetries(maxRetries.getOrElse(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRIES_DEFAULT) - 1)
+    val policy = RetryPolicies.limitRetries(maxRetries - 1)
 
-    val finiteDurationSleep: FiniteDuration = {
-      val duration = sleep.getOrElse(Duration(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRY_INTERVAL_DEFAULT))
-      FiniteDuration(duration._1, duration._2)
-    }
+    val finiteDurationSleep: FiniteDuration = FiniteDuration(retryInterval._1, retryInterval._2)
+
     def onFailure(throwable: Throwable, details: RetryDetails): Future[Unit] = {
       logger.debug(throwable.getMessage)
       Sleep[Future].sleep(finiteDurationSleep)
@@ -187,7 +186,7 @@ object NSDbSinkWriter {
             case rPCInsertResults =>
               Future.successful(rPCInsertResults)
           }),
-          10.seconds
+          timeout
         )
       case _ =>
         fResult

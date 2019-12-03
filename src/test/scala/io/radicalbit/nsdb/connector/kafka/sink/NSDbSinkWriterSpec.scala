@@ -26,6 +26,7 @@ import org.scalatest.{FlatSpec, Matchers, OneInstancePerTest}
 
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
+import scala.concurrent.duration._
 import scala.util.{Success, Try}
 
 class NSDbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest with StrictLogging {
@@ -324,7 +325,7 @@ class NSDbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
     }
 
     an[RuntimeException] shouldBe thrownBy(
-      NSDbSinkWriter.writeWithDeliveryPolicy(Some(AtLeastOnce), futureResult, None, None))
+      NSDbSinkWriter.writeWithDeliveryPolicy(Some(AtLeastOnce), futureResult, 10, 1.second, 20.seconds))
   }
 
   "SinkRecordConversion" should "correctly return list of successfully result" in {
@@ -333,7 +334,7 @@ class NSDbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
     val result       = List(RPCInsertResult(completedSuccessfully = true), RPCInsertResult(completedSuccessfully = true))
     def futureResult = Future(result)
 
-    NSDbSinkWriter.writeWithDeliveryPolicy(Some(AtLeastOnce), futureResult, None, None) shouldBe result
+    NSDbSinkWriter.writeWithDeliveryPolicy(Some(AtLeastOnce), futureResult, 10, 1.second, 20.seconds) shouldBe result
   }
 
   "SinkRecordConversion" should "thrown an Exception whether the future fails" in {
@@ -344,7 +345,7 @@ class NSDbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
     }
 
     an[RuntimeException] shouldBe thrownBy(
-      NSDbSinkWriter.writeWithDeliveryPolicy(Some(AtLeastOnce), futureResult, None, None))
+      NSDbSinkWriter.writeWithDeliveryPolicy(Some(AtLeastOnce), futureResult, 10, 1.second, 20.seconds))
   }
 
   "SinkRecordConversion" should "validate semantic delivery according to the possible values" in {

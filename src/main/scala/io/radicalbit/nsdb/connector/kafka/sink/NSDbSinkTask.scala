@@ -46,11 +46,21 @@ class NSDbSinkTask extends SinkTask {
 
     import scala.concurrent.duration._
 
+    val timeout =
+      validateDuration(NSDbConfigs.NSDB_TIMEOUT, Option(props.get(NSDbConfigs.NSDB_TIMEOUT)))
+        .getOrElse(Duration(NSDbConfigs.NSDB_TIMEOUT_DEFAULT))
+    val retries = Option(props.get(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRIES).toInt)
+      .getOrElse(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRIES_DEFAULT)
+    val retryInterval = validateDuration(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRY_INTERVAL,
+                                         Option(props.get(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRY_INTERVAL)))
+      .getOrElse(Duration(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRY_INTERVAL_DEFAULT))
+
     writer = Some(
       new NSDbSinkWriter(
+        // NOTE: it's fine to directly convert port into integer since props are validated when connector is deployed
         connection = Await.result(NSDB.connect(props.get(NSDbConfigs.NSDB_HOST),
                                                props.get(NSDbConfigs.NSDB_PORT).toInt)(ExecutionContext.global),
-                                  10.seconds),
+                                  timeout),
         kcqls = props.get(NSDbConfigs.NSDB_KCQL).split(";").map(Kcql.parse).groupBy(_.getSource),
         globalDb = Option(props.get(NSDbConfigs.NSDB_DB)),
         globalNamespace = Option(props.get(NSDbConfigs.NSDB_NAMESPACE)),
@@ -61,9 +71,9 @@ class NSDbSinkTask extends SinkTask {
           validateDuration(NSDbConfigs.NSDB_SHARD_INTERVAL, Option(props.get(NSDbConfigs.NSDB_SHARD_INTERVAL))),
         semanticDelivery =
           validateSemanticDelivery(NSDbConfigs.NSDB_SEMANTIC_DELIVERY, props.get(NSDbConfigs.NSDB_SEMANTIC_DELIVERY)),
-        retries = Option(props.get(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRIES).toInt),
-        sleep = validateDuration(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRY_INTERVAL,
-                                 Option(props.get(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRY_INTERVAL)))
+        retries = retries,
+        retryInterval = retryInterval,
+        timeout = timeout
       ))
   }
 
