@@ -50,13 +50,21 @@ object NSDbConfigs {
   val NSDB_SHARD_INTERVAL     = "nsdb.shard.interval"
   val NSDB_SHARD_INTERVAL_DOC = "NSDb shard interval (optional)"
 
+  val NSDB_TIMEOUT         = "nsdb.timeout"
+  val NSDB_TIMEOUT_DOC     = "Timeout used for test NSDb connection"
+  val NSDB_TIMEOUT_DEFAULT = "10 seconds"
+
   val NSDB_SEMANTIC_DELIVERY         = "nsdb.semantic.delivery"
   val NSDB_SEMANTIC_DELIVERY_DOC     = "NSDb semantic delivery (optional) [at_most_once (default), at_least_once]"
   val NSDB_SEMANTIC_DELIVERY_DEFAULT = Constants.AtMostOnce.value
 
-  val NSDB_TIMEOUT         = "nsdb.timeout"
-  val NSDB_TIMEOUT_DOC     = "Timeout used for test NSDb connection"
-  val NSDB_TIMEOUT_DEFAULT = "10 seconds"
+  val NSDB_AT_LEAST_ONCE_RETRIES         = "nsdb.at.least.once.retries"
+  val NSDB_AT_LEAST_ONCE_RETRIES_DOC     = "Number of writing retries when AT_LEAST_ONCE semantic is set"
+  val NSDB_AT_LEAST_ONCE_RETRIES_DEFAULT = 10
+
+  val NSDB_AT_LEAST_ONCE_RETRY_INTERVAL         = "nsdb.at.least.once.retry.interval"
+  val NSDB_AT_LEAST_ONCE_RETRY_INTERVAL_DOC     = "Time to sleep from a retry to anther when AT_LEAST_ONCE semantic is set"
+  val NSDB_AT_LEAST_ONCE_RETRY_INTERVAL_DEFAULT = "500 milliseconds"
 
   /**
     * @return sink expected configuration:
@@ -77,9 +85,13 @@ object NSDbConfigs {
     *
     *         - nsdb.shard.interval the shard interval applied to the metric specified in the kcql.
     *
+    *         - nsdb.timeout timeout used for test nsdb connection
+    *
     *         - nsdb.semantic.delivery the semantic delivery for writing data into nsdb
     *
-    *         - nsdb.timeout timeout used for test nsdb connection
+    *         - nsdb.at.least.once.retries number of maximum writing retries
+    *
+    *         - nsdb.at.least.once.retry.interval time to sleep from a retry to another
     */
   def configDef: ConfigDef =
     new ConfigDef()
@@ -132,11 +144,21 @@ object NSDbConfigs {
               2,
               ConfigDef.Width.MEDIUM,
               NSDB_SHARD_INTERVAL)
+      .define(NSDB_TIMEOUT, Type.STRING, NSDB_TIMEOUT_DEFAULT, Importance.MEDIUM, NSDB_TIMEOUT_DOC)
       .define(NSDB_SEMANTIC_DELIVERY,
               Type.STRING,
               NSDB_SEMANTIC_DELIVERY_DEFAULT,
               Importance.MEDIUM,
               NSDB_SEMANTIC_DELIVERY_DOC)
-      .define(NSDB_TIMEOUT, Type.STRING, NSDB_TIMEOUT_DEFAULT, Importance.MEDIUM, NSDB_TIMEOUT_DOC)
+      .define(NSDB_AT_LEAST_ONCE_RETRIES,
+              Type.INT,
+              NSDB_AT_LEAST_ONCE_RETRIES_DEFAULT,
+              Importance.LOW,
+              NSDB_AT_LEAST_ONCE_RETRIES_DOC)
+      .define(NSDB_AT_LEAST_ONCE_RETRY_INTERVAL,
+              Type.STRING,
+              NSDB_AT_LEAST_ONCE_RETRY_INTERVAL_DEFAULT,
+              Importance.LOW,
+              NSDB_AT_LEAST_ONCE_RETRY_INTERVAL_DOC)
 
 }

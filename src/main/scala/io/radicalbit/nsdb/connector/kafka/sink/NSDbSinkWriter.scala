@@ -16,20 +16,23 @@
 
 package io.radicalbit.nsdb.connector.kafka.sink
 
+import cats.instances.future._
 import com.datamountaineer.kcql.Kcql
 import com.typesafe.scalalogging.{Logger, StrictLogging}
 import io.radicalbit.nsdb.api.scala.{Bit, Db, NSDB}
-import io.radicalbit.nsdb.connector.kafka.sink.conf.Constants.SemanticDelivery
+import io.radicalbit.nsdb.connector.kafka.sink.conf.Constants._
+import io.radicalbit.nsdb.rpc.response.RPCInsertResult
 import org.apache.kafka.connect.data.Schema.Type
 import org.apache.kafka.connect.data._
 import org.apache.kafka.connect.sink.SinkRecord
 import org.slf4j.LoggerFactory
+import retry._
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 import scala.util.Try
 
 /**
@@ -42,7 +45,10 @@ class NSDbSinkWriter(connection: NSDB,
                      defaultValue: Option[java.math.BigDecimal],
                      retentionPolicy: Option[Duration],
                      shardInterval: Option[Duration],
-                     semanticDelivery: Option[SemanticDelivery])
+                     semanticDelivery: Option[SemanticDelivery],
+                     retries: Int,
+                     retryInterval: Duration,
+                     timeout: Duration)
     extends StrictLogging {
 
   logger.info("Initialising NSDb writer")
@@ -136,7 +142,7 @@ class NSDbSinkWriter(connection: NSDB,
           Future(convertedBit)
       }))
 
-      bitSeq.flatMap(connection.write)
+      writeWithDeliveryPolicy(semanticDelivery, bitSeq.flatMap(connection.write), retries, retryInterval, timeout)
 
       logger.debug("Wrote {} to NSDb.", recordMaps.length)
     })
@@ -148,13 +154,44 @@ class NSDbSinkWriter(connection: NSDB,
 
 object NSDbSinkWriter {
 
-  import io.radicalbit.nsdb.connector.kafka.sink.conf.Constants._
-
   private val logger = Logger(LoggerFactory.getLogger(classOf[NSDbSinkWriter]))
 
   private val defaultTimestampKeywords = Set("now", "now()", "sys_time", "sys_time()", "current_time", "current_time()")
 
   private def getFieldName(parent: Option[String], field: String) = parent.map(p => s"$p.$field").getOrElse(field)
+
+  private case class WriteFailureException(msg: String) extends RuntimeException(msg)
+
+  def writeWithDeliveryPolicy(semanticDelivery: Option[SemanticDelivery],
+                              fResult: => Future[List[RPCInsertResult]],
+                              maxRetries: Int,
+                              retryInterval: Duration,
+                              timeout: Duration) = {
+
+    val policy = RetryPolicies.limitRetries(maxRetries - 1)
+
+    val finiteDurationSleep: FiniteDuration = FiniteDuration(retryInterval._1, retryInterval._2)
+
+    def onFailure(throwable: Throwable, details: RetryDetails): Future[Unit] = {
+      logger.debug(throwable.getMessage)
+      Sleep[Future].sleep(finiteDurationSleep)
+    }
+
+    semanticDelivery match {
+      case Some(AtLeastOnce) =>
+        Await.result(
+          retryingOnAllErrors.apply(policy, onFailure)(fResult.flatMap {
+            case rPCInsertResults if !rPCInsertResults.forall(_.completedSuccessfully) =>
+              Future.failed(WriteFailureException("Field 'completedSuccessfully' returns false"))
+            case rPCInsertResults =>
+              Future.successful(rPCInsertResults)
+          }),
+          timeout
+        )
+      case _ =>
+        fResult
+    }
+  }
 
   /**
     * Validate the semantic delivery property according to possible fixed values

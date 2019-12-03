@@ -49,6 +49,11 @@ class NSDbSinkTask extends SinkTask {
     val timeout =
       validateDuration(NSDbConfigs.NSDB_TIMEOUT, Option(props.get(NSDbConfigs.NSDB_TIMEOUT)))
         .getOrElse(Duration(NSDbConfigs.NSDB_TIMEOUT_DEFAULT))
+    val retries = Option(props.get(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRIES).toInt)
+      .getOrElse(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRIES_DEFAULT)
+    val retryInterval = validateDuration(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRY_INTERVAL,
+                                         Option(props.get(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRY_INTERVAL)))
+      .getOrElse(Duration(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRY_INTERVAL_DEFAULT))
 
     writer = Some(
       new NSDbSinkWriter(
@@ -65,7 +70,10 @@ class NSDbSinkTask extends SinkTask {
         shardInterval =
           validateDuration(NSDbConfigs.NSDB_SHARD_INTERVAL, Option(props.get(NSDbConfigs.NSDB_SHARD_INTERVAL))),
         semanticDelivery =
-          validateSemanticDelivery(NSDbConfigs.NSDB_SEMANTIC_DELIVERY, props.get(NSDbConfigs.NSDB_SEMANTIC_DELIVERY))
+          validateSemanticDelivery(NSDbConfigs.NSDB_SEMANTIC_DELIVERY, props.get(NSDbConfigs.NSDB_SEMANTIC_DELIVERY)),
+        retries = retries,
+        retryInterval = retryInterval,
+        timeout = timeout
       ))
   }
 

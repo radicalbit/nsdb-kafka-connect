@@ -84,8 +84,11 @@ class NSDbSinkConnector extends SinkConnector {
         //put the default host, port and semantic delivery to be available in task in case they are not provided.
         taskConfigs.put(NSDbConfigs.NSDB_HOST, NSDbConfigs.NSDB_HOST_DEFAULT)
         taskConfigs.put(NSDbConfigs.NSDB_PORT, NSDbConfigs.NSDB_PORT_DEFAULT.toString)
-        taskConfigs.put(NSDbConfigs.NSDB_SEMANTIC_DELIVERY, NSDbConfigs.NSDB_SEMANTIC_DELIVERY_DEFAULT)
         taskConfigs.put(NSDbConfigs.NSDB_TIMEOUT, NSDbConfigs.NSDB_TIMEOUT_DEFAULT)
+        taskConfigs.put(NSDbConfigs.NSDB_SEMANTIC_DELIVERY, NSDbConfigs.NSDB_SEMANTIC_DELIVERY_DEFAULT)
+        taskConfigs.put(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRIES, NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRIES_DEFAULT.toString)
+        taskConfigs.put(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRY_INTERVAL,
+                        NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRY_INTERVAL_DEFAULT.toString)
         taskConfigs.putAll(configProps)
         taskConfigs.put(NSDbConfigs.NSDB_KCQL, g.asScala.mkString(";")) //overwrite
         taskConfigs

@@ -42,9 +42,18 @@ object Dependencies {
     lazy val core      = namespace %% "scalatest" % version
   }
 
+  object `cats-retry` {
+    lazy val version   = "0.3.1"
+    lazy val namespace = "com.github.cb372"
+    lazy val core      = namespace %% "cats-retry-core" % version
+    lazy val effect    = namespace %% "cats-retry-cats-effect" % version
+  }
+
   lazy val libraries = Seq(
     kafka.connect % Provided,
     kcql.kcql,
+    `cats-retry`.core,
+    `cats-retry`.effect,
     scalatest.core % Test
   )
 }
