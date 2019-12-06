@@ -63,8 +63,24 @@ object NSDbConfigs {
   val NSDB_AT_LEAST_ONCE_RETRIES_DEFAULT = 10
 
   val NSDB_AT_LEAST_ONCE_RETRY_INTERVAL         = "nsdb.at.least.once.retry.interval"
-  val NSDB_AT_LEAST_ONCE_RETRY_INTERVAL_DOC     = "Time to sleep from a retry to anther when AT_LEAST_ONCE semantic is set"
+  val NSDB_AT_LEAST_ONCE_RETRY_INTERVAL_DOC     = "Time to sleep from a retry to another when AT_LEAST_ONCE semantic is set"
   val NSDB_AT_LEAST_ONCE_RETRY_INTERVAL_DEFAULT = "500 milliseconds"
+
+  val NSDB_TRANSFORM_METRICS     = "nsdb.transform.metrics"
+  val NSDB_TRANSFORM_METRICS_DOC = ""
+
+  val NSDB_TRANSFORM_VALUES     = "nsdb.transform.values"
+  val NSDB_TRANSFORM_VALUES_DOC = ""
+
+  val NSDB_TRANSFORM_TAGS     = "nsdb.transform.tags"
+  val NSDB_TRANSFORM_TAGS_DOC = ""
+
+  val NSDB_TRANSFORM_TIMESTAMPS     = "nsdb.transform.timestamps"
+  val NSDB_TRANSFORM_TIMESTAMPS_DOC = ""
+
+  // inner property
+  val NSDB_INNER_ENCODED_QUERIES_TYPE  = "nsdb.inner.encoded.queries.type"
+  val NSDB_INNER_ENCODED_QUERIES_VALUE = "nsdb.inner.encoded.queries.value"
 
   /**
     * @return sink expected configuration:
@@ -115,6 +131,7 @@ object NSDbConfigs {
               NSDB_PORT)
       .define(NSDB_KCQL,
               Type.STRING,
+              null,
               Importance.HIGH,
               NSDB_KCQL_DOC,
               "Connection",
@@ -144,21 +161,66 @@ object NSDbConfigs {
               2,
               ConfigDef.Width.MEDIUM,
               NSDB_SHARD_INTERVAL)
-      .define(NSDB_TIMEOUT, Type.STRING, NSDB_TIMEOUT_DEFAULT, Importance.MEDIUM, NSDB_TIMEOUT_DOC)
-      .define(NSDB_SEMANTIC_DELIVERY,
+      .define(NSDB_TIMEOUT,
               Type.STRING,
-              NSDB_SEMANTIC_DELIVERY_DEFAULT,
+              NSDB_TIMEOUT_DEFAULT,
               Importance.MEDIUM,
-              NSDB_SEMANTIC_DELIVERY_DOC)
-      .define(NSDB_AT_LEAST_ONCE_RETRIES,
-              Type.INT,
-              NSDB_AT_LEAST_ONCE_RETRIES_DEFAULT,
-              Importance.LOW,
-              NSDB_AT_LEAST_ONCE_RETRIES_DOC)
-      .define(NSDB_AT_LEAST_ONCE_RETRY_INTERVAL,
+              NSDB_TIMEOUT_DOC,
+              "Connection",
+              4,
+              ConfigDef.Width.MEDIUM,
+              NSDB_TIMEOUT)
+      .define(
+        NSDB_SEMANTIC_DELIVERY,
+        Type.STRING,
+        NSDB_SEMANTIC_DELIVERY_DEFAULT,
+        ConfigDef.ValidString.in(Constants.AtMostOnce.value, Constants.AtLeastOnce.value),
+        Importance.MEDIUM,
+        NSDB_SEMANTIC_DELIVERY_DOC,
+        "Semantic Delivery",
+        1,
+        ConfigDef.Width.MEDIUM,
+        NSDB_SEMANTIC_DELIVERY
+      )
+      .define(
+        NSDB_AT_LEAST_ONCE_RETRIES,
+        Type.INT,
+        NSDB_AT_LEAST_ONCE_RETRIES_DEFAULT,
+        Importance.LOW,
+        NSDB_AT_LEAST_ONCE_RETRIES_DOC,
+        "Semantic Delivery",
+        2,
+        ConfigDef.Width.MEDIUM,
+        NSDB_AT_LEAST_ONCE_RETRIES
+      )
+      .define(
+        NSDB_AT_LEAST_ONCE_RETRY_INTERVAL,
+        Type.STRING,
+        NSDB_AT_LEAST_ONCE_RETRY_INTERVAL_DEFAULT,
+        Importance.LOW,
+        NSDB_AT_LEAST_ONCE_RETRY_INTERVAL_DOC,
+        "Semantic Delivery",
+        3,
+        ConfigDef.Width.MEDIUM,
+        NSDB_AT_LEAST_ONCE_RETRY_INTERVAL
+      )
+      .define(NSDB_TRANSFORM_METRICS,
               Type.STRING,
-              NSDB_AT_LEAST_ONCE_RETRY_INTERVAL_DEFAULT,
-              Importance.LOW,
-              NSDB_AT_LEAST_ONCE_RETRY_INTERVAL_DOC)
-
+              null,
+              DottedNotationValidator,
+              Importance.HIGH,
+              NSDB_TRANSFORM_METRICS_DOC)
+      .define(NSDB_TRANSFORM_VALUES,
+              Type.STRING,
+              null,
+              DottedNotationValidator,
+              Importance.HIGH,
+              NSDB_TRANSFORM_VALUES_DOC)
+      .define(NSDB_TRANSFORM_TAGS, Type.STRING, null, DottedNotationValidator, Importance.HIGH, NSDB_TRANSFORM_TAGS_DOC)
+      .define(NSDB_TRANSFORM_TIMESTAMPS,
+              Type.STRING,
+              null,
+              DottedNotationValidator,
+              Importance.HIGH,
+              NSDB_TRANSFORM_TIMESTAMPS_DOC)
 }

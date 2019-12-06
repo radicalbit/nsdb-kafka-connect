@@ -18,10 +18,9 @@ package io.radicalbit.nsdb.connector.kafka.sink
 
 import java.util.{Collection => JCollection, Map => JMap}
 
-import com.datamountaineer.kcql.Kcql
 import io.radicalbit.nsdb.api.scala.NSDB
 import io.radicalbit.nsdb.connector.kafka.sink.NSDbSinkWriter._
-import io.radicalbit.nsdb.connector.kafka.sink.conf.NSDbConfigs
+import io.radicalbit.nsdb.connector.kafka.sink.conf.{NSDbConfigs, QueryConfUtility}
 import org.apache.kafka.common.utils.AppInfoParser
 import org.apache.kafka.connect.sink.{SinkRecord, SinkTask}
 import org.slf4j.LoggerFactory
@@ -32,7 +31,7 @@ import scala.concurrent.{Await, ExecutionContext}
 /**
   * NSDb Sink task.
   */
-class NSDbSinkTask extends SinkTask {
+class NSDbSinkTask extends SinkTask with QueryConfUtility {
   private val log = LoggerFactory.getLogger(classOf[NSDbSinkTask])
 
   private var writer: Option[NSDbSinkWriter] = None
@@ -61,7 +60,7 @@ class NSDbSinkTask extends SinkTask {
         connection = Await.result(NSDB.connect(props.get(NSDbConfigs.NSDB_HOST),
                                                props.get(NSDbConfigs.NSDB_PORT).toInt)(ExecutionContext.global),
                                   timeout),
-        kcqls = props.get(NSDbConfigs.NSDB_KCQL).split(";").map(Kcql.parse).groupBy(_.getSource),
+        parsedKcql = function(props),
         globalDb = Option(props.get(NSDbConfigs.NSDB_DB)),
         globalNamespace = Option(props.get(NSDbConfigs.NSDB_NAMESPACE)),
         defaultValue = validateDefaultValue(Option(props.get(NSDbConfigs.NSDB_DEFAULT_VALUE))),
