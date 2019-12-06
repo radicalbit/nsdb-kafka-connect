@@ -16,6 +16,7 @@
 
 package io.radicalbit.nsdb.connector.kafka.sink
 
+import io.radicalbit.nsdb.connector.kafka.sink.models.ParsedKcql
 import org.scalatest.{FlatSpec, Matchers, OneInstancePerTest}
 
 class ParsedKcqlSpec extends FlatSpec with Matchers with OneInstancePerTest {

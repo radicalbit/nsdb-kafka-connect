@@ -42,6 +42,14 @@ object Dependencies {
     lazy val core      = namespace %% "scalatest" % version
   }
 
+  object circe {
+    lazy val version = "0.11.1"
+    lazy val namespace = "io.circe"
+    lazy val core = namespace %% "circe-core" % version
+    lazy val generic = namespace %% "circe-generic" % version
+    lazy val parser = namespace %% "circe-parser" % version
+  }
+
   object `cats-retry` {
     lazy val version   = "0.3.1"
     lazy val namespace = "com.github.cb372"
@@ -52,6 +60,9 @@ object Dependencies {
   lazy val libraries = Seq(
     kafka.connect % Provided,
     kcql.kcql,
+    circe.core,
+    circe.generic,
+    circe.parser,
     `cats-retry`.core,
     `cats-retry`.effect,
     scalatest.core % Test

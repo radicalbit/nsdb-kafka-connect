@@ -52,4 +52,23 @@ object Constants {
       }
   }
 
+  object QueryType {
+    def parse(s: String): Option[QueryType] =
+      s.toLowerCase match {
+        case KcqlType.value      => Some(KcqlType)
+        case TransformType.value => Some(TransformType)
+        case _                   => None
+      }
+  }
+
+  sealed trait QueryType {
+    def value: String
+  }
+  case object KcqlType extends QueryType {
+    val value: String = "kcql-type"
+  }
+  case object TransformType extends QueryType {
+    val value: String = "transform-type"
+  }
+
 }
