@@ -83,6 +83,11 @@ object NSDbConfigs {
   val NSDB_INNER_ENCODED_MAPPINGS_TYPE  = "nsdb.inner.encoded.queries.type"
   val NSDB_INNER_ENCODED_MAPPINGS_VALUE = "nsdb.inner.encoded.queries.value"
 
+  private val NSDB_GROUP_MAPPING_CONFIG     = "Mapping Configuration"
+  private val NSDB_GROUP_SEMANTIC_DELIVERY  = "Semantic Delivery"
+  private val NSDB_GROUP_CONNECTION         = "Connection"
+  private val NSDB_GROUP_METRIC_INIT_PARAMS = "Metric Init Params"
+
   /**
     * @return sink expected configuration:
     *
@@ -125,7 +130,7 @@ object NSDbConfigs {
               NSDB_HOST_DEFAULT,
               Importance.HIGH,
               NSDB_HOST_DOC,
-              "Connection",
+              NSDB_GROUP_CONNECTION,
               1,
               ConfigDef.Width.MEDIUM,
               NSDB_HOST)
@@ -134,7 +139,7 @@ object NSDbConfigs {
               NSDB_PORT_DEFAULT,
               Importance.MEDIUM,
               NSDB_PORT_DOC,
-              "Connection",
+              NSDB_GROUP_CONNECTION,
               2,
               ConfigDef.Width.MEDIUM,
               NSDB_PORT)
@@ -143,7 +148,7 @@ object NSDbConfigs {
               null,
               Importance.HIGH,
               NSDB_KCQL_DOC,
-              "Connection",
+              NSDB_GROUP_CONNECTION,
               3,
               ConfigDef.Width.MEDIUM,
               NSDB_KCQL)
@@ -156,26 +161,28 @@ object NSDbConfigs {
         null,
         Importance.MEDIUM,
         NSDB_METRIC_RETENTION_POLICY_DOC,
-        "Metric Init Params",
+        NSDB_GROUP_METRIC_INIT_PARAMS,
         1,
         ConfigDef.Width.MEDIUM,
         NSDB_METRIC_RETENTION_POLICY
       )
-      .define(NSDB_SHARD_INTERVAL,
-              Type.STRING,
-              null,
-              Importance.MEDIUM,
-              NSDB_SHARD_INTERVAL_DOC,
-              "Metric Init Params",
-              2,
-              ConfigDef.Width.MEDIUM,
-              NSDB_SHARD_INTERVAL)
+      .define(
+        NSDB_SHARD_INTERVAL,
+        Type.STRING,
+        null,
+        Importance.MEDIUM,
+        NSDB_SHARD_INTERVAL_DOC,
+        NSDB_GROUP_METRIC_INIT_PARAMS,
+        2,
+        ConfigDef.Width.MEDIUM,
+        NSDB_SHARD_INTERVAL
+      )
       .define(NSDB_TIMEOUT,
               Type.STRING,
               NSDB_TIMEOUT_DEFAULT,
               Importance.MEDIUM,
               NSDB_TIMEOUT_DOC,
-              "Connection",
+              NSDB_GROUP_CONNECTION,
               4,
               ConfigDef.Width.MEDIUM,
               NSDB_TIMEOUT)
@@ -186,7 +193,7 @@ object NSDbConfigs {
         ConfigDef.ValidString.in(Constants.AtMostOnce.value, Constants.AtLeastOnce.value),
         Importance.MEDIUM,
         NSDB_SEMANTIC_DELIVERY_DOC,
-        "Semantic Delivery",
+        NSDB_GROUP_SEMANTIC_DELIVERY,
         1,
         ConfigDef.Width.MEDIUM,
         NSDB_SEMANTIC_DELIVERY
@@ -197,7 +204,7 @@ object NSDbConfigs {
         NSDB_AT_LEAST_ONCE_RETRIES_DEFAULT,
         Importance.LOW,
         NSDB_AT_LEAST_ONCE_RETRIES_DOC,
-        "Semantic Delivery",
+        NSDB_GROUP_SEMANTIC_DELIVERY,
         2,
         ConfigDef.Width.MEDIUM,
         NSDB_AT_LEAST_ONCE_RETRIES
@@ -208,7 +215,7 @@ object NSDbConfigs {
         NSDB_AT_LEAST_ONCE_RETRY_INTERVAL_DEFAULT,
         Importance.LOW,
         NSDB_AT_LEAST_ONCE_RETRY_INTERVAL_DOC,
-        "Semantic Delivery",
+        NSDB_GROUP_SEMANTIC_DELIVERY,
         3,
         ConfigDef.Width.MEDIUM,
         NSDB_AT_LEAST_ONCE_RETRY_INTERVAL
@@ -220,7 +227,7 @@ object NSDbConfigs {
         DottedNotationValidator,
         Importance.HIGH,
         NSDB_MAPPING_METRICS_DOC,
-        "Mapping Configuration",
+        NSDB_GROUP_MAPPING_CONFIG,
         1,
         ConfigDef.Width.MEDIUM,
         NSDB_MAPPING_METRICS
@@ -232,7 +239,7 @@ object NSDbConfigs {
         DottedNotationValidator,
         Importance.HIGH,
         NSDB_MAPPING_VALUES_DOC,
-        "Mapping Configuration",
+        NSDB_GROUP_MAPPING_CONFIG,
         2,
         ConfigDef.Width.MEDIUM,
         NSDB_MAPPING_VALUES
@@ -244,7 +251,7 @@ object NSDbConfigs {
         DottedNotationValidator,
         Importance.HIGH,
         NSDB_MAPPING_TAGS_DOC,
-        "Mapping Configuration",
+        NSDB_GROUP_MAPPING_CONFIG,
         3,
         ConfigDef.Width.MEDIUM,
         NSDB_MAPPING_TAGS
@@ -256,7 +263,7 @@ object NSDbConfigs {
         DottedNotationValidator,
         Importance.HIGH,
         NSDB_MAPPING_TIMESTAMPS_DOC,
-        "Mapping Configuration",
+        NSDB_GROUP_MAPPING_CONFIG,
         4,
         ConfigDef.Width.MEDIUM,
         NSDB_MAPPING_TIMESTAMPS
