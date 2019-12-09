@@ -16,20 +16,8 @@
 
 package io.radicalbit.nsdb.connector.kafka.sink.models
 
-import io.radicalbit.nsdb.api.scala.Bit
-
-abstract class IQuery {
-  def dbField: String
-  def namespaceField: String
-  def metric: String
-  def defaultValue: Option[java.math.BigDecimal]
-  def timestampField: Option[String]
-  def valueField: Option[String]
-//  def tagAliasesMap: Map[String, String]
-  //  def dimensionAliasesMap: Map[String, String]
-
-  def convertToBit(valuesMap: Map[String, Any]): Bit
-
-  protected val defaultTimestampKeywords =
-    Set("now", "now()", "sys_time", "sys_time()", "current_time", "current_time()")
-}
+final case class Mappings(topic: String,
+                          metricFieldName: String,
+                          valueFieldName: Option[String],
+                          timestampFieldName: Option[String],
+                          tagsFieldName: List[String])

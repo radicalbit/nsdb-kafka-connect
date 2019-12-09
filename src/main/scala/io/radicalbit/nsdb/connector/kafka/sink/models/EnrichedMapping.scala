@@ -18,38 +18,49 @@ package io.radicalbit.nsdb.connector.kafka.sink.models
 
 import io.radicalbit.nsdb.api.scala.{Bit, Db}
 
-object QueryTransform {
-  def apply(transform: Transform,
+object EnrichedMapping {
+  def apply(mappings: Mappings,
             globalDb: Option[String],
             globalNamespace: Option[String],
-            defaultValue: Option[java.math.BigDecimal]): IQuery = {
+            defaultValue: Option[java.math.BigDecimal]): MappingInterface = {
     require(globalDb.isDefined, "A global db configuration be defined")
     require(globalNamespace.isDefined, "A global namespace configuration must be defined")
-    require(transform.metricFieldName.nonEmpty, "Metric value in Transform must be defined")
+    require(mappings.metricFieldName.nonEmpty, "Metric value in Transform must be defined")
     require(
-      transform.valueFieldName.nonEmpty || defaultValue.isDefined,
+      mappings.valueFieldName.nonEmpty || defaultValue.isDefined,
       "Value alias in transform must be defined"
     )
 
-    QueryTransform(
+    EnrichedMapping(
       globalDb.get,
       globalNamespace.get,
-      transform.metricFieldName,
+      mappings.metricFieldName,
       defaultValue,
-      transform.timestampFieldName.fold(Some("now"))(Some(_)),
-      transform.valueFieldName,
-      transform.tagsFieldName
+      mappings.timestampFieldName.fold(Some("now"))(Some(_)),
+      mappings.valueFieldName,
+      mappings.tagsFieldName
     )
   }
 }
-final case class QueryTransform(dbField: String,
-                                namespaceField: String,
-                                metric: String,
-                                defaultValue: Option[java.math.BigDecimal],
-                                timestampField: Option[String],
-                                valueField: Option[String],
-                                tagsNames: List[String])
-    extends IQuery {
+
+/**
+  * Information for converting into [[Bit]] for nsdb
+  * @param dbField NSDb db field to be fetched from topic data.
+  * @param namespaceField NSDb namespace field to be fetched from topic data.
+  * @param metric NSDb metric.
+  * @param defaultValue
+  * @param timestampField timestamp field if present (current timestamp is used otherwise).
+  * @param valueField value field if present (default value is used otherwise).
+  * @param tagsNames NSDb tags aliases map.
+  */
+final case class EnrichedMapping(dbField: String,
+                                 namespaceField: String,
+                                 metric: String,
+                                 defaultValue: Option[java.math.BigDecimal],
+                                 timestampField: Option[String],
+                                 valueField: Option[String],
+                                 tagsNames: List[String])
+    extends MappingInterface {
 
   def convertToBit(valuesMap: Map[String, Any]): Bit = {
     require(valuesMap.get(dbField).isDefined && valuesMap(dbField).isInstanceOf[String],
@@ -108,19 +119,18 @@ final case class QueryTransform(dbField: String,
         }
     }
 
-    tagsNames.foreach {
-      case name =>
-        valuesMap.get(name) match {
-          case Some(v: Int)                  => bit = bit.tag(name, v)
-          case Some(v: Long)                 => bit = bit.tag(name, v)
-          case Some(v: Double)               => bit = bit.tag(name, v)
-          case Some(v: Float)                => bit = bit.tag(name, v)
-          case Some(v: String)               => bit = bit.tag(name, v)
-          case Some(v: java.math.BigDecimal) => bit = bit.tag(name, v)
-          case Some(unsupportedValue) =>
-            sys.error(s"Type ${Option(unsupportedValue).map(_.getClass)} is not supported for tags")
-          case None => ()
-        }
+    tagsNames.foreach { name =>
+      valuesMap.get(name) match {
+        case Some(v: Int)                  => bit = bit.tag(name, v)
+        case Some(v: Long)                 => bit = bit.tag(name, v)
+        case Some(v: Double)               => bit = bit.tag(name, v)
+        case Some(v: Float)                => bit = bit.tag(name, v)
+        case Some(v: String)               => bit = bit.tag(name, v)
+        case Some(v: java.math.BigDecimal) => bit = bit.tag(name, v)
+        case Some(unsupportedValue) =>
+          sys.error(s"Type ${Option(unsupportedValue).map(_.getClass)} is not supported for tags")
+        case None => ()
+      }
     }
 
     bit

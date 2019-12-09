@@ -20,7 +20,7 @@ import java.util.{Collection => JCollection, Map => JMap}
 
 import io.radicalbit.nsdb.api.scala.NSDB
 import io.radicalbit.nsdb.connector.kafka.sink.NSDbSinkWriter._
-import io.radicalbit.nsdb.connector.kafka.sink.conf.{NSDbConfigs, QueryConfUtility}
+import io.radicalbit.nsdb.connector.kafka.sink.conf.{NSDbConfigs, MappingConfUtility}
 import org.apache.kafka.common.utils.AppInfoParser
 import org.apache.kafka.connect.sink.{SinkRecord, SinkTask}
 import org.slf4j.LoggerFactory
@@ -31,7 +31,7 @@ import scala.concurrent.{Await, ExecutionContext}
 /**
   * NSDb Sink task.
   */
-class NSDbSinkTask extends SinkTask with QueryConfUtility {
+class NSDbSinkTask extends SinkTask with MappingConfUtility {
   private val log = LoggerFactory.getLogger(classOf[NSDbSinkTask])
 
   private var writer: Option[NSDbSinkWriter] = None
@@ -60,7 +60,7 @@ class NSDbSinkTask extends SinkTask with QueryConfUtility {
         connection = Await.result(NSDB.connect(props.get(NSDbConfigs.NSDB_HOST),
                                                props.get(NSDbConfigs.NSDB_PORT).toInt)(ExecutionContext.global),
                                   timeout),
-        parsedKcql = function(props),
+        stringToMappingInterfaces = mapToStringToMappingInterfaces(props),
         globalDb = Option(props.get(NSDbConfigs.NSDB_DB)),
         globalNamespace = Option(props.get(NSDbConfigs.NSDB_NAMESPACE)),
         defaultValue = validateDefaultValue(Option(props.get(NSDbConfigs.NSDB_DEFAULT_VALUE))),

@@ -41,7 +41,7 @@ final case class ParsedKcql(dbField: String,
                             valueField: Option[String],
                             tagAliasesMap: Map[String, String],
                             dimensionAliasesMap: Map[String, String])
-    extends IQuery {
+    extends MappingInterface {
 
   override def convertToBit(valuesMap: Map[String, Any]): Bit = {
 
@@ -132,7 +132,7 @@ object ParsedKcql {
   def apply(queryString: String,
             globalDb: Option[String],
             globalNamespace: Option[String],
-            defaultValue: Option[java.math.BigDecimal]): IQuery = {
+            defaultValue: Option[java.math.BigDecimal]): MappingInterface = {
     this(Kcql.parse(queryString), globalDb, globalNamespace, defaultValue)
   }
 
@@ -149,7 +149,7 @@ object ParsedKcql {
   def apply(kcql: Kcql,
             globalDb: Option[String],
             globalNamespace: Option[String],
-            defaultValue: Option[java.math.BigDecimal]): IQuery = {
+            defaultValue: Option[java.math.BigDecimal]): MappingInterface = {
 
     val aliasesMap = kcql.getFields.asScala.map(f => f.getAlias -> f.getName).toMap
 

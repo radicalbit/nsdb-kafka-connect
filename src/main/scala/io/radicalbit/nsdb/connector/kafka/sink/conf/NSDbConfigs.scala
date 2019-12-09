@@ -33,7 +33,7 @@ object NSDbConfigs {
   val NSDB_PORT_DEFAULT = 7817
 
   val NSDB_KCQL     = "nsdb.kcql"
-  val NSDB_KCQL_DOC = "Kcql semicolon separated list"
+  val NSDB_KCQL_DOC = "Kcql semicolon separated list (mutually exclusive with nsdb.mapping.metrics)"
 
   val NSDB_DB     = "nsdb.db"
   val NSDB_DB_DOC = "NSDb db (optional)"
@@ -66,21 +66,22 @@ object NSDbConfigs {
   val NSDB_AT_LEAST_ONCE_RETRY_INTERVAL_DOC     = "Time to sleep from a retry to another when AT_LEAST_ONCE semantic is set"
   val NSDB_AT_LEAST_ONCE_RETRY_INTERVAL_DEFAULT = "500 milliseconds"
 
-  val NSDB_TRANSFORM_METRICS     = "nsdb.transform.metrics"
-  val NSDB_TRANSFORM_METRICS_DOC = ""
+  val NSDB_MAPPING_METRICS = "nsdb.mapping.metrics"
+  val NSDB_MAPPING_METRICS_DOC =
+    "Metrics value for mapping configuration in dotted notation (mutually exclusive with nsdb.kcql)"
 
-  val NSDB_TRANSFORM_VALUES     = "nsdb.transform.values"
-  val NSDB_TRANSFORM_VALUES_DOC = ""
+  val NSDB_MAPPING_VALUES     = "nsdb.mapping.values"
+  val NSDB_MAPPING_VALUES_DOC = "Values value for mapping configuration in dotted notation (optional)"
 
-  val NSDB_TRANSFORM_TAGS     = "nsdb.transform.tags"
-  val NSDB_TRANSFORM_TAGS_DOC = ""
+  val NSDB_MAPPING_TAGS     = "nsdb.mapping.tags"
+  val NSDB_MAPPING_TAGS_DOC = "Tags value for mapping configuration in dotted notation (optional)"
 
-  val NSDB_TRANSFORM_TIMESTAMPS     = "nsdb.transform.timestamps"
-  val NSDB_TRANSFORM_TIMESTAMPS_DOC = ""
+  val NSDB_MAPPING_TIMESTAMPS     = "nsdb.mapping.timestamps"
+  val NSDB_MAPPING_TIMESTAMPS_DOC = "Timestamps value for mapping configuration in dotted notation (optional)"
 
   // inner property
-  val NSDB_INNER_ENCODED_QUERIES_TYPE  = "nsdb.inner.encoded.queries.type"
-  val NSDB_INNER_ENCODED_QUERIES_VALUE = "nsdb.inner.encoded.queries.value"
+  val NSDB_INNER_ENCODED_MAPPINGS_TYPE  = "nsdb.inner.encoded.queries.type"
+  val NSDB_INNER_ENCODED_MAPPINGS_VALUE = "nsdb.inner.encoded.queries.value"
 
   /**
     * @return sink expected configuration:
@@ -108,6 +109,14 @@ object NSDbConfigs {
     *         - nsdb.at.least.once.retries number of maximum writing retries
     *
     *         - nsdb.at.least.once.retry.interval time to sleep from a retry to another
+    *
+    *         - nsdb.mapping.metrics colon separated list of metrics
+    *
+    *         - nsdb.mapping.values colon separated list of values
+    *
+    *         - nsdb.mapping.tags colon separated list of tags
+    *
+    *         - nsdb.mapping.timestamps colon separated list of timestamps
     */
   def configDef: ConfigDef =
     new ConfigDef()
@@ -204,23 +213,52 @@ object NSDbConfigs {
         ConfigDef.Width.MEDIUM,
         NSDB_AT_LEAST_ONCE_RETRY_INTERVAL
       )
-      .define(NSDB_TRANSFORM_METRICS,
-              Type.STRING,
-              null,
-              DottedNotationValidator,
-              Importance.HIGH,
-              NSDB_TRANSFORM_METRICS_DOC)
-      .define(NSDB_TRANSFORM_VALUES,
-              Type.STRING,
-              null,
-              DottedNotationValidator,
-              Importance.HIGH,
-              NSDB_TRANSFORM_VALUES_DOC)
-      .define(NSDB_TRANSFORM_TAGS, Type.STRING, null, DottedNotationValidator, Importance.HIGH, NSDB_TRANSFORM_TAGS_DOC)
-      .define(NSDB_TRANSFORM_TIMESTAMPS,
-              Type.STRING,
-              null,
-              DottedNotationValidator,
-              Importance.HIGH,
-              NSDB_TRANSFORM_TIMESTAMPS_DOC)
+      .define(
+        NSDB_MAPPING_METRICS,
+        Type.STRING,
+        null,
+        DottedNotationValidator,
+        Importance.HIGH,
+        NSDB_MAPPING_METRICS_DOC,
+        "Mapping Configuration",
+        1,
+        ConfigDef.Width.MEDIUM,
+        NSDB_MAPPING_METRICS
+      )
+      .define(
+        NSDB_MAPPING_VALUES,
+        Type.STRING,
+        null,
+        DottedNotationValidator,
+        Importance.HIGH,
+        NSDB_MAPPING_VALUES_DOC,
+        "Mapping Configuration",
+        2,
+        ConfigDef.Width.MEDIUM,
+        NSDB_MAPPING_VALUES
+      )
+      .define(
+        NSDB_MAPPING_TAGS,
+        Type.STRING,
+        null,
+        DottedNotationValidator,
+        Importance.HIGH,
+        NSDB_MAPPING_TAGS_DOC,
+        "Mapping Configuration",
+        3,
+        ConfigDef.Width.MEDIUM,
+        NSDB_MAPPING_TAGS
+      )
+      .define(
+        NSDB_MAPPING_TIMESTAMPS,
+        Type.STRING,
+        null,
+        DottedNotationValidator,
+        Importance.HIGH,
+        NSDB_MAPPING_TIMESTAMPS_DOC,
+        "Mapping Configuration",
+        4,
+        ConfigDef.Width.MEDIUM,
+        NSDB_MAPPING_TIMESTAMPS
+      )
 }

@@ -18,12 +18,15 @@ package io.radicalbit.nsdb.connector.kafka.sink.conf
 
 import org.apache.kafka.common.config.{ConfigDef, ConfigException}
 
+/**
+  * Kafka Connect Dotted Notation Validator (valid format: `topicName.fieldName`)
+  */
 object DottedNotationValidator extends ConfigDef.Validator {
-  private val regex = "^[a-zA-Z0-9_]*\\.[a-zA-Z0-9_]*$".r
+  private val dottedNotation = "^[a-zA-Z0-9_]*\\.[a-zA-Z0-9_]*$".r
 
   def ensureValid(name: String, value: Any): Unit = {
     Option(value).foreach { v =>
-      if (!v.toString.split(",").forall(_.matches(regex.regex)))
+      if (!v.toString.split(",").forall(_.matches(dottedNotation.regex)))
         throw new ConfigException(name, value, "Bad field format. Expected: [topicName.fieldName]")
     }
   }

@@ -18,7 +18,7 @@ package io.radicalbit.nsdb.connector.kafka.sink
 
 import java.util.{List => JList, Map => JMap}
 
-import io.radicalbit.nsdb.connector.kafka.sink.conf.{NSDbConfigs, QueryConfUtility}
+import io.radicalbit.nsdb.connector.kafka.sink.conf.{NSDbConfigs, MappingConfUtility}
 import org.apache.kafka.common.config.{ConfigDef, ConfigValue}
 import org.apache.kafka.common.utils.AppInfoParser
 import org.apache.kafka.connect.sink.SinkConnector
@@ -31,7 +31,7 @@ import scala.collection.JavaConverters._
   * Kafka connect NSDb Sink connector
   *
   **/
-class NSDbSinkConnector extends SinkConnector with QueryConfUtility {
+class NSDbSinkConnector extends SinkConnector with MappingConfUtility {
 
   private var configProps: JMap[String, String] = _
   private val log                               = LoggerFactory.getLogger(classOf[NSDbSinkConnector])
@@ -71,9 +71,9 @@ class NSDbSinkConnector extends SinkConnector with QueryConfUtility {
     */
   override def taskConfigs(maxTasks: Int): JList[JMap[String, String]] = {
 
-    val (groupsType, queries) = validateAndParseQueryFormatConfig(configs)
+    val (groupsType, mappings) = validateAndParseMappingsConfig(configs)
 
-    val groups = ConnectorUtils.groupPartitions(queries.toList.asJava, maxTasks).asScala
+    val groups = ConnectorUtils.groupPartitions(mappings.toList.asJava, maxTasks).asScala
 
     //split up the kcql statement based on the number of tasks.
     groups
@@ -89,8 +89,8 @@ class NSDbSinkConnector extends SinkConnector with QueryConfUtility {
         taskConfigs.put(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRY_INTERVAL,
                         NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRY_INTERVAL_DEFAULT.toString)
         taskConfigs.putAll(configProps)
-        taskConfigs.put(NSDbConfigs.NSDB_INNER_ENCODED_QUERIES_TYPE, groupsType.value)         //overwrite
-        taskConfigs.put(NSDbConfigs.NSDB_INNER_ENCODED_QUERIES_VALUE, g.asScala.mkString(";")) //overwrite
+        taskConfigs.put(NSDbConfigs.NSDB_INNER_ENCODED_MAPPINGS_TYPE, groupsType.value)         //overwrite
+        taskConfigs.put(NSDbConfigs.NSDB_INNER_ENCODED_MAPPINGS_VALUE, g.asScala.mkString(";")) //overwrite
         taskConfigs
       }
       .asJava

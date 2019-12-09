@@ -16,19 +16,19 @@
 
 package io.radicalbit.nsdb.connector.kafka.sink.conf
 
-import io.radicalbit.nsdb.connector.kafka.sink.models.{ParsedKcql, QueryTransform, Transform}
+import io.radicalbit.nsdb.connector.kafka.sink.models.{ParsedKcql, EnrichedMapping, Mappings}
 import org.scalatest.{FlatSpec, Matchers}
 import io.circe.generic.auto._
 import io.circe.syntax._
 
 import scala.collection.JavaConverters._
 
-class QueryConfUtilitySpec extends FlatSpec with Matchers with QueryConfUtility {
+class MappingConfUtilitySpec extends FlatSpec with Matchers with MappingConfUtility {
 
   private val conf = NSDbConfigs.configDef
 
   private def validateQueryConfTest(props: Map[String, String]) =
-    validateAndParseQueryFormatConfig(conf.validate(props.asJava).asScala.map(c => (c.name(), c)).toMap)
+    validateAndParseMappingsConfig(conf.validate(props.asJava).asScala.map(c => (c.name(), c)).toMap)
 
   "QueryConfUtility" should "validate and parse kcql configuration" in {
     val kcqlQuery =
@@ -42,7 +42,7 @@ class QueryConfUtilitySpec extends FlatSpec with Matchers with QueryConfUtility 
     result shouldBe List(kcqlQuery)
   }
 
-  "QueryConfUtility" should "validate and parse transform configuration (all props)" in {
+  "QueryConfUtility" should "validate and parse mappings configuration (all props)" in {
 
     val metricFieldName    = "topicC.bitC,topicB.bitC"
     val valueFieldName     = "topicC.y,topicB.y"
@@ -50,42 +50,42 @@ class QueryConfUtilitySpec extends FlatSpec with Matchers with QueryConfUtility 
     val tagsFieldName      = "topicC.x,topicC.z,topicB.z"
 
     val props = Map[String, String](
-      NSDbConfigs.NSDB_TRANSFORM_METRICS    -> metricFieldName,
-      NSDbConfigs.NSDB_TRANSFORM_VALUES     -> valueFieldName,
-      NSDbConfigs.NSDB_TRANSFORM_TIMESTAMPS -> timestampFieldName,
-      NSDbConfigs.NSDB_TRANSFORM_TAGS       -> tagsFieldName
+      NSDbConfigs.NSDB_MAPPING_METRICS    -> metricFieldName,
+      NSDbConfigs.NSDB_MAPPING_VALUES     -> valueFieldName,
+      NSDbConfigs.NSDB_MAPPING_TIMESTAMPS -> timestampFieldName,
+      NSDbConfigs.NSDB_MAPPING_TAGS       -> tagsFieldName
     )
 
     val (queryType, result) = validateQueryConfTest(props)
 
     val expectedResult =
       List(
-        Transform("topicC", "bitC", Some("y"), Some("timestamp"), List("x", "z")).asJson.noSpaces,
-        Transform("topicB", "bitC", Some("y"), Some("timestamp"), List("z")).asJson.noSpaces
+        Mappings("topicC", "bitC", Some("y"), Some("timestamp"), List("x", "z")).asJson.noSpaces,
+        Mappings("topicB", "bitC", Some("y"), Some("timestamp"), List("z")).asJson.noSpaces
       )
 
-    queryType shouldBe Constants.TransformType
+    queryType shouldBe Constants.MappingType
     result shouldBe expectedResult
 
   }
 
-  "QueryConfUtility" should "validate and parse transform configuration (only metrics)" in {
+  "QueryConfUtility" should "validate and parse mappings configuration (only metrics)" in {
     val metricFieldName = "topicC.bitC"
 
-    val props = Map[String, String](NSDbConfigs.NSDB_TRANSFORM_METRICS -> metricFieldName)
+    val props = Map[String, String](NSDbConfigs.NSDB_MAPPING_METRICS -> metricFieldName)
 
     val (queryType, result) = validateQueryConfTest(props)
 
     val expectedResult =
-      List(Transform("topicC", "bitC", None, None, List.empty[String]).asJson.noSpaces)
+      List(Mappings("topicC", "bitC", None, None, List.empty[String]).asJson.noSpaces)
 
-    queryType shouldBe Constants.TransformType
+    queryType shouldBe Constants.MappingType
     result shouldBe expectedResult
   }
 
   "QueryConfUtility" should "thrown an Exception whether the configuration is wrongly set" in {
     val valueFieldName = "topicC.y,topicB.y"
-    val props          = Map[String, String](NSDbConfigs.NSDB_TRANSFORM_VALUES -> valueFieldName)
+    val props          = Map[String, String](NSDbConfigs.NSDB_MAPPING_VALUES -> valueFieldName)
 
     an[IllegalArgumentException] shouldBe thrownBy(validateQueryConfTest(props))
   }
@@ -97,24 +97,24 @@ class QueryConfUtilitySpec extends FlatSpec with Matchers with QueryConfUtility 
     val tagsFieldName      = "topicC.x,topicC.z,topicB.z"
 
     val props = Map[String, String](
-      NSDbConfigs.NSDB_TRANSFORM_METRICS    -> metricFieldName,
-      NSDbConfigs.NSDB_TRANSFORM_VALUES     -> valueFieldName,
-      NSDbConfigs.NSDB_TRANSFORM_TIMESTAMPS -> timestampFieldName,
-      NSDbConfigs.NSDB_TRANSFORM_TAGS       -> tagsFieldName
+      NSDbConfigs.NSDB_MAPPING_METRICS    -> metricFieldName,
+      NSDbConfigs.NSDB_MAPPING_VALUES     -> valueFieldName,
+      NSDbConfigs.NSDB_MAPPING_TIMESTAMPS -> timestampFieldName,
+      NSDbConfigs.NSDB_MAPPING_TAGS       -> tagsFieldName
     )
 
     an[IllegalArgumentException] shouldBe thrownBy(validateQueryConfTest(props))
   }
 
-  "QueryConfUtility" should "function 1" in {
+  "QueryConfUtility" should "correctly parses parsed kcql object" in {
 
     val kcqlQuery =
       "INSERT INTO bitC SELECT d as db, n as namespace, x AS a, y AS value, z as b, t as c FROM topicC WITHTIMESTAMP sys_time() WITHTAG(a,b)"
 
-    val props = Map[String, String](NSDbConfigs.NSDB_INNER_ENCODED_QUERIES_TYPE -> Constants.KcqlType.value,
-                                    NSDbConfigs.NSDB_INNER_ENCODED_QUERIES_VALUE -> kcqlQuery)
+    val props = Map[String, String](NSDbConfigs.NSDB_INNER_ENCODED_MAPPINGS_TYPE -> Constants.KcqlType.value,
+                                    NSDbConfigs.NSDB_INNER_ENCODED_MAPPINGS_VALUE -> kcqlQuery)
 
-    val result = function(props.asJava)
+    val result = mapToStringToMappingInterfaces(props.asJava)
     result.keys shouldBe Set("topicC")
     result.values.toList.flatten shouldBe List(
       ParsedKcql(
@@ -129,40 +129,40 @@ class QueryConfUtilitySpec extends FlatSpec with Matchers with QueryConfUtility 
       ))
   }
 
-  "QueryConfUtility" should "function 2" in {
+  "QueryConfUtility" should "throws an IllegalArgumentException whether nsdb.inner.encoded.queries.type prop is wrongly set" in {
 
     val kcqlQuery =
       "INSERT INTO bitC SELECT d as db, n as namespace, x AS a, y AS value, z as b, t as c FROM topicC WITHTIMESTAMP sys_time() WITHTAG(a,b)"
 
-    val props = Map[String, String](NSDbConfigs.NSDB_INNER_ENCODED_QUERIES_TYPE -> "wrong-value",
-                                    NSDbConfigs.NSDB_INNER_ENCODED_QUERIES_VALUE -> kcqlQuery)
+    val props = Map[String, String](NSDbConfigs.NSDB_INNER_ENCODED_MAPPINGS_TYPE -> "wrong-value",
+                                    NSDbConfigs.NSDB_INNER_ENCODED_MAPPINGS_VALUE -> kcqlQuery)
 
-    an[IllegalArgumentException] shouldBe thrownBy(function(props.asJava))
+    an[IllegalArgumentException] shouldBe thrownBy(mapToStringToMappingInterfaces(props.asJava))
   }
 
-  "QueryConfUtility" should "function 3" in {
+  "QueryConfUtility" should "correctly parses enriched mapping object" in {
 
-    val transform =
-      Transform("topicC", "bitC", Some("y"), Some("timestamp"), List("x", "z")).asJson.noSpaces
+    val mappings =
+      Mappings("topicC", "bitC", Some("y"), Some("timestamp"), List("x", "z")).asJson.noSpaces
 
     val props = Map[String, String](
-      NSDbConfigs.NSDB_INNER_ENCODED_QUERIES_TYPE  -> Constants.TransformType.value,
-      NSDbConfigs.NSDB_INNER_ENCODED_QUERIES_VALUE -> transform,
-      NSDbConfigs.NSDB_DB                          -> "db",
-      NSDbConfigs.NSDB_NAMESPACE                   -> "namespace"
+      NSDbConfigs.NSDB_INNER_ENCODED_MAPPINGS_TYPE  -> Constants.MappingType.value,
+      NSDbConfigs.NSDB_INNER_ENCODED_MAPPINGS_VALUE -> mappings,
+      NSDbConfigs.NSDB_DB                           -> "db",
+      NSDbConfigs.NSDB_NAMESPACE                    -> "namespace"
     )
 
-    val result = function(props.asJava)
+    val result = mapToStringToMappingInterfaces(props.asJava)
 
     result.keys shouldBe Set("topicC")
     result.values.toList.flatten shouldBe List(
-      QueryTransform(dbField = "db",
-        namespaceField = "namespace",
-        metric = "bitC",
-        defaultValue = None,
-        timestampField = Some("timestamp"),
-        valueField = Some("y"),
-        tagsNames = List("x", "z"))
+      EnrichedMapping(dbField = "db",
+                      namespaceField = "namespace",
+                      metric = "bitC",
+                      defaultValue = None,
+                      timestampField = Some("timestamp"),
+                      valueField = Some("y"),
+                      tagsNames = List("x", "z"))
     )
   }
 
