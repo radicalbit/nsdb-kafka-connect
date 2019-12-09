@@ -100,12 +100,20 @@ class NSDbConfigsSpec extends FlatSpec with Matchers with OneInstancePerTest {
     configKeys.get(NSDbConfigs.NSDB_TIMEOUT).defaultValue shouldBe NSDbConfigs.NSDB_TIMEOUT_DEFAULT
     configKeys.get(NSDbConfigs.NSDB_TIMEOUT).importance shouldBe Importance.MEDIUM
     configKeys.get(NSDbConfigs.NSDB_TIMEOUT).documentation shouldBe NSDbConfigs.NSDB_TIMEOUT_DOC
+    configKeys.get(NSDbConfigs.NSDB_TIMEOUT).group shouldBe "Connection"
+    configKeys.get(NSDbConfigs.NSDB_TIMEOUT).orderInGroup shouldBe 4
+    configKeys.get(NSDbConfigs.NSDB_TIMEOUT).width shouldBe ConfigDef.Width.MEDIUM
+    configKeys.get(NSDbConfigs.NSDB_TIMEOUT).displayName shouldBe NSDbConfigs.NSDB_TIMEOUT
 
     configKeys.get(NSDbConfigs.NSDB_SEMANTIC_DELIVERY).name shouldBe NSDbConfigs.NSDB_SEMANTIC_DELIVERY
     configKeys.get(NSDbConfigs.NSDB_SEMANTIC_DELIVERY).`type` shouldBe Type.STRING
     configKeys.get(NSDbConfigs.NSDB_SEMANTIC_DELIVERY).defaultValue shouldBe NSDbConfigs.NSDB_SEMANTIC_DELIVERY_DEFAULT
     configKeys.get(NSDbConfigs.NSDB_SEMANTIC_DELIVERY).importance shouldBe Importance.MEDIUM
     configKeys.get(NSDbConfigs.NSDB_SEMANTIC_DELIVERY).documentation shouldBe NSDbConfigs.NSDB_SEMANTIC_DELIVERY_DOC
+    configKeys.get(NSDbConfigs.NSDB_SEMANTIC_DELIVERY).group shouldBe "Semantic Delivery"
+    configKeys.get(NSDbConfigs.NSDB_SEMANTIC_DELIVERY).orderInGroup shouldBe 1
+    configKeys.get(NSDbConfigs.NSDB_SEMANTIC_DELIVERY).width shouldBe ConfigDef.Width.MEDIUM
+    configKeys.get(NSDbConfigs.NSDB_SEMANTIC_DELIVERY).displayName shouldBe NSDbConfigs.NSDB_SEMANTIC_DELIVERY
 
     configKeys.get(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRIES).name shouldBe NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRIES
     configKeys.get(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRIES).`type` shouldBe Type.INT
@@ -116,6 +124,68 @@ class NSDbConfigsSpec extends FlatSpec with Matchers with OneInstancePerTest {
     configKeys
       .get(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRIES)
       .documentation shouldBe NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRIES_DOC
+    configKeys.get(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRIES).group shouldBe "Semantic Delivery"
+    configKeys.get(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRIES).orderInGroup shouldBe 2
+    configKeys.get(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRIES).width shouldBe ConfigDef.Width.MEDIUM
+    configKeys.get(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRIES).displayName shouldBe NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRIES
+
+    configKeys
+      .get(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRY_INTERVAL)
+      .name shouldBe NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRY_INTERVAL
+    configKeys.get(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRY_INTERVAL).`type` shouldBe Type.STRING
+    configKeys
+      .get(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRY_INTERVAL)
+      .defaultValue shouldBe NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRY_INTERVAL_DEFAULT
+    configKeys.get(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRY_INTERVAL).importance shouldBe Importance.LOW
+    configKeys
+      .get(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRY_INTERVAL)
+      .documentation shouldBe NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRY_INTERVAL_DOC
+    configKeys.get(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRY_INTERVAL).group shouldBe "Semantic Delivery"
+    configKeys.get(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRY_INTERVAL).orderInGroup shouldBe 3
+    configKeys.get(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRY_INTERVAL).width shouldBe ConfigDef.Width.MEDIUM
+    configKeys
+      .get(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRY_INTERVAL)
+      .displayName shouldBe NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRY_INTERVAL
+
+    configKeys.get(NSDbConfigs.NSDB_MAPPING_METRICS).name shouldBe NSDbConfigs.NSDB_MAPPING_METRICS
+    configKeys.get(NSDbConfigs.NSDB_MAPPING_METRICS).`type` shouldBe Type.STRING
+    configKeys.get(NSDbConfigs.NSDB_MAPPING_METRICS).defaultValue shouldBe null
+    configKeys.get(NSDbConfigs.NSDB_MAPPING_METRICS).importance shouldBe Importance.HIGH
+    configKeys.get(NSDbConfigs.NSDB_MAPPING_METRICS).documentation shouldBe NSDbConfigs.NSDB_MAPPING_METRICS_DOC
+    configKeys.get(NSDbConfigs.NSDB_MAPPING_METRICS).group shouldBe "Mapping Configuration"
+    configKeys.get(NSDbConfigs.NSDB_MAPPING_METRICS).orderInGroup shouldBe 1
+    configKeys.get(NSDbConfigs.NSDB_MAPPING_METRICS).width shouldBe ConfigDef.Width.MEDIUM
+    configKeys.get(NSDbConfigs.NSDB_MAPPING_METRICS).displayName shouldBe NSDbConfigs.NSDB_MAPPING_METRICS
+
+    configKeys.get(NSDbConfigs.NSDB_MAPPING_VALUES).name shouldBe NSDbConfigs.NSDB_MAPPING_VALUES
+    configKeys.get(NSDbConfigs.NSDB_MAPPING_VALUES).`type` shouldBe Type.STRING
+    configKeys.get(NSDbConfigs.NSDB_MAPPING_VALUES).defaultValue shouldBe null
+    configKeys.get(NSDbConfigs.NSDB_MAPPING_VALUES).importance shouldBe Importance.HIGH
+    configKeys.get(NSDbConfigs.NSDB_MAPPING_VALUES).documentation shouldBe NSDbConfigs.NSDB_MAPPING_VALUES_DOC
+    configKeys.get(NSDbConfigs.NSDB_MAPPING_VALUES).group shouldBe "Mapping Configuration"
+    configKeys.get(NSDbConfigs.NSDB_MAPPING_VALUES).orderInGroup shouldBe 2
+    configKeys.get(NSDbConfigs.NSDB_MAPPING_VALUES).width shouldBe ConfigDef.Width.MEDIUM
+    configKeys.get(NSDbConfigs.NSDB_MAPPING_VALUES).displayName shouldBe NSDbConfigs.NSDB_MAPPING_VALUES
+
+    configKeys.get(NSDbConfigs.NSDB_MAPPING_TAGS).name shouldBe NSDbConfigs.NSDB_MAPPING_TAGS
+    configKeys.get(NSDbConfigs.NSDB_MAPPING_TAGS).`type` shouldBe Type.STRING
+    configKeys.get(NSDbConfigs.NSDB_MAPPING_TAGS).defaultValue shouldBe null
+    configKeys.get(NSDbConfigs.NSDB_MAPPING_TAGS).importance shouldBe Importance.HIGH
+    configKeys.get(NSDbConfigs.NSDB_MAPPING_TAGS).documentation shouldBe NSDbConfigs.NSDB_MAPPING_TAGS_DOC
+    configKeys.get(NSDbConfigs.NSDB_MAPPING_TAGS).group shouldBe "Mapping Configuration"
+    configKeys.get(NSDbConfigs.NSDB_MAPPING_TAGS).orderInGroup shouldBe 3
+    configKeys.get(NSDbConfigs.NSDB_MAPPING_TAGS).width shouldBe ConfigDef.Width.MEDIUM
+    configKeys.get(NSDbConfigs.NSDB_MAPPING_TAGS).displayName shouldBe NSDbConfigs.NSDB_MAPPING_TAGS
+
+    configKeys.get(NSDbConfigs.NSDB_MAPPING_TIMESTAMPS).name shouldBe NSDbConfigs.NSDB_MAPPING_TIMESTAMPS
+    configKeys.get(NSDbConfigs.NSDB_MAPPING_TIMESTAMPS).`type` shouldBe Type.STRING
+    configKeys.get(NSDbConfigs.NSDB_MAPPING_TIMESTAMPS).defaultValue shouldBe null
+    configKeys.get(NSDbConfigs.NSDB_MAPPING_TIMESTAMPS).importance shouldBe Importance.HIGH
+    configKeys.get(NSDbConfigs.NSDB_MAPPING_TIMESTAMPS).documentation shouldBe NSDbConfigs.NSDB_MAPPING_TIMESTAMPS_DOC
+    configKeys.get(NSDbConfigs.NSDB_MAPPING_TIMESTAMPS).group shouldBe "Mapping Configuration"
+    configKeys.get(NSDbConfigs.NSDB_MAPPING_TIMESTAMPS).orderInGroup shouldBe 4
+    configKeys.get(NSDbConfigs.NSDB_MAPPING_TIMESTAMPS).width shouldBe ConfigDef.Width.MEDIUM
+    configKeys.get(NSDbConfigs.NSDB_MAPPING_TIMESTAMPS).displayName shouldBe NSDbConfigs.NSDB_MAPPING_TIMESTAMPS
 
   }
 }
