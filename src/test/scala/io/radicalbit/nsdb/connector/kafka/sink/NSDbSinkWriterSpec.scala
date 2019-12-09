@@ -19,7 +19,7 @@ package io.radicalbit.nsdb.connector.kafka.sink
 import com.typesafe.scalalogging.{Logger, StrictLogging}
 import io.radicalbit.nsdb.api.scala.{Bit, Db}
 import io.radicalbit.nsdb.connector.kafka.sink.conf.Constants.AtLeastOnce
-import io.radicalbit.nsdb.connector.kafka.sink.models.{ParsedKcql, QueryTransform, Transform}
+import io.radicalbit.nsdb.connector.kafka.sink.models.{EnrichedMapping, Mappings, ParsedKcql}
 import io.radicalbit.nsdb.rpc.response.RPCInsertResult
 import org.apache.kafka.connect.data._
 import org.apache.kafka.connect.sink.SinkRecord
@@ -420,8 +420,8 @@ class NSDbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
     bit shouldBe expectedBit
   }
 
-  "SinkRecordConversion" should "successfully convert records given a transform without a value alias and a default value" in {
-    val withDimensionAlias = Transform(
+  "SinkRecordConversion" should "successfully convert records given a mapping without a value alias and a default value" in {
+    val withDimensionAlias = Mappings(
       topic = "topic",
       metricFieldName = "metric",
       valueFieldName = None,
@@ -429,11 +429,11 @@ class NSDbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
       tagsFieldName = List.empty[String]
     )
 
-    val queryTransform =
-      QueryTransform(withDimensionAlias, Some("string_id"), Some("string_field"), Some(new java.math.BigDecimal("1")))
+    val enrichedMapping =
+      EnrichedMapping(withDimensionAlias, Some("string_id"), Some("string_field"), Some(new java.math.BigDecimal("1")))
 
     val bit: Bit =
-      queryTransform.convertToBit(NSDbSinkWriter.parse(simpleRecordWithDimentions, None, None, None))
+      enrichedMapping.convertToBit(NSDbSinkWriter.parse(simpleRecordWithDimentions, None, None, None))
 
     val expectedBit =
       Db("my_id_val")
@@ -442,6 +442,7 @@ class NSDbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
         .timestamp(12)
         .value(1)
         .dimension("d2", 12)
+        .dimension("int_field", 12)
         .dimension("d1", "d1")
 
     bit shouldBe expectedBit
@@ -576,7 +577,7 @@ class NSDbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
 
   "SinkRecordConversion" should "convert a SinkRecord given a transform with default timestamp value current_time()" in {
 
-    val withDimensionAlias = Transform(
+    val withDimensionAlias = Mappings(
       topic = "topic",
       metricFieldName = "metric",
       valueFieldName = Some("d2"),
@@ -584,18 +585,25 @@ class NSDbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
       tagsFieldName = List.empty[String]
     )
 
-    val queryTransform =
-      QueryTransform(withDimensionAlias, Some("string_id"), Some("string_field"), None)
+    val enrichedMapping =
+      EnrichedMapping(withDimensionAlias, Some("string_id"), Some("string_field"), None)
 
     val bit: Bit =
-      queryTransform.convertToBit(NSDbSinkWriter.parse(simpleRecordWithDimentions, None, None, None))
+      enrichedMapping.convertToBit(NSDbSinkWriter.parse(simpleRecordWithDimentions, None, None, None))
 
     val timestamp = bit.timestamp
 
     timestamp shouldBe defined
 
     timestamp.map { now =>
-      val expected = Db("my_id_val").namespace("foo").metric("metric").timestamp(now).value(12).dimension("d1", "d1")
+      val expected = Db("my_id_val")
+        .namespace("foo")
+        .metric("metric")
+        .timestamp(now)
+        .value(12)
+        .dimension("long_field", 12L)
+        .dimension("int_field", 12)
+        .dimension("d1", "d1")
       bit shouldBe expected
     }
   }
