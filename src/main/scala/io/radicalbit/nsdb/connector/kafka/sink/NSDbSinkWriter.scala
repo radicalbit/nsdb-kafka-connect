@@ -90,17 +90,20 @@ class NSDbSinkWriter(connection: NSDB,
     **/
   private def writeRecords(topic: String,
                            records: List[SinkRecord],
-                           kcqls: Array[MappingInterface],
+                           mappingInterfaces: Array[MappingInterface],
                            globalDb: Option[String],
                            globalNamespace: Option[String],
                            defaultValue: Option[java.math.BigDecimal]): Unit = {
-    logger.debug("Handling {} records for topic {}. Found also {} kcql queries.", records.size, topic, kcqls)
+    logger.debug("Handling {} records for topic {}. Found also {} kcql queries.",
+                 records.size,
+                 topic,
+                 mappingInterfaces)
 
     import NSDbSinkWriter.{logger => _, _}
 
     val recordMaps = records.map(parse(_, globalDb, globalNamespace, defaultValue))
 
-    kcqls.foreach { parsedKcql =>
+    mappingInterfaces.foreach { parsedKcql =>
       logger.debug(
         "Handling query: \t{}\n Found also user params db: {}, namespace: {}, defaultValue: {}",
         parsedKcql,

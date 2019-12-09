@@ -111,8 +111,8 @@ class MappingConfUtilitySpec extends FlatSpec with Matchers with MappingConfUtil
     val kcqlQuery =
       "INSERT INTO bitC SELECT d as db, n as namespace, x AS a, y AS value, z as b, t as c FROM topicC WITHTIMESTAMP sys_time() WITHTAG(a,b)"
 
-    val props = Map[String, String](NSDbConfigs.NSDB_INNER_ENCODED_MAPPINGS_TYPE -> Constants.KcqlType.value,
-                                    NSDbConfigs.NSDB_INNER_ENCODED_MAPPINGS_VALUE -> kcqlQuery)
+    val props = Map[String, String](NSDbConfigs.NSDB_ENCODED_MAPPINGS_TYPE -> Constants.KcqlType.value,
+                                    NSDbConfigs.NSDB_ENCODED_MAPPINGS_VALUE -> kcqlQuery)
 
     val result = mapToStringToMappingInterfaces(props.asJava)
     result.keys shouldBe Set("topicC")
@@ -134,8 +134,8 @@ class MappingConfUtilitySpec extends FlatSpec with Matchers with MappingConfUtil
     val kcqlQuery =
       "INSERT INTO bitC SELECT d as db, n as namespace, x AS a, y AS value, z as b, t as c FROM topicC WITHTIMESTAMP sys_time() WITHTAG(a,b)"
 
-    val props = Map[String, String](NSDbConfigs.NSDB_INNER_ENCODED_MAPPINGS_TYPE -> "wrong-value",
-                                    NSDbConfigs.NSDB_INNER_ENCODED_MAPPINGS_VALUE -> kcqlQuery)
+    val props = Map[String, String](NSDbConfigs.NSDB_ENCODED_MAPPINGS_TYPE -> "wrong-value",
+                                    NSDbConfigs.NSDB_ENCODED_MAPPINGS_VALUE -> kcqlQuery)
 
     an[IllegalArgumentException] shouldBe thrownBy(mapToStringToMappingInterfaces(props.asJava))
   }
@@ -146,10 +146,10 @@ class MappingConfUtilitySpec extends FlatSpec with Matchers with MappingConfUtil
       Mappings("topicC", "bitC", Some("y"), Some("timestamp"), List("x", "z")).asJson.noSpaces
 
     val props = Map[String, String](
-      NSDbConfigs.NSDB_INNER_ENCODED_MAPPINGS_TYPE  -> Constants.MappingType.value,
-      NSDbConfigs.NSDB_INNER_ENCODED_MAPPINGS_VALUE -> mappings,
-      NSDbConfigs.NSDB_DB                           -> "db",
-      NSDbConfigs.NSDB_NAMESPACE                    -> "namespace"
+      NSDbConfigs.NSDB_ENCODED_MAPPINGS_TYPE  -> Constants.MappingType.value,
+      NSDbConfigs.NSDB_ENCODED_MAPPINGS_VALUE -> mappings,
+      NSDbConfigs.NSDB_DB                     -> "db",
+      NSDbConfigs.NSDB_NAMESPACE              -> "namespace"
     )
 
     val result = mapToStringToMappingInterfaces(props.asJava)

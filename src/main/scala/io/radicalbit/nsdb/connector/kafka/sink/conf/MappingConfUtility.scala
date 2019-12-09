@@ -18,7 +18,7 @@ package io.radicalbit.nsdb.connector.kafka.sink.conf
 
 import com.datamountaineer.kcql.Kcql
 import io.radicalbit.nsdb.connector.kafka.sink.NSDbSinkWriter.validateDefaultValue
-import io.radicalbit.nsdb.connector.kafka.sink.conf.Constants.{KcqlType, Type, MappingType}
+import io.radicalbit.nsdb.connector.kafka.sink.conf.Constants.{KcqlType, MapType, MappingType}
 import io.radicalbit.nsdb.connector.kafka.sink.models.{MappingInterface, ParsedKcql, EnrichedMapping, Mappings}
 import org.apache.kafka.common.config.ConfigValue
 
@@ -50,13 +50,16 @@ trait MappingConfUtility {
     val timestampsFieldName = "TIMESTAMPS"
     val tagsFieldName       = "TAGS"
 
+    val dottedNotation = "[a-zA-Z0-9_]+\\.[a-zA-Z0-9_]+".r
+
     //we should use a parser combinator here
-    def singleFieldParsing(optF: Option[String], fieldName: String): Map[String, (String, List[String])] =
+    def tokenize(optF: Option[String], fieldName: String): Map[String, (String, List[String])] =
       optF
         .map { f =>
-          f.split(",")
+          dottedNotation
+            .findAllMatchIn(f)
             .toList
-            .flatMap(_.split('.').toList match { // safe because of dotted notation validation
+            .flatMap(_.toString().split('.').toList match { // safe because of dotted notation validation
               case Nil                   => None
               case head :: middle :: Nil => Some(head -> middle)
             })
@@ -73,10 +76,10 @@ trait MappingConfUtility {
         .getOrElse(Map.empty[String, (String, List[String])])
 
     val mappings =
-      (singleFieldParsing(Some(metrics), metricsFieldName).toSeq ++
-        singleFieldParsing(values, valuesFieldName).toSeq ++
-        singleFieldParsing(timestamps, timestampsFieldName).toSeq ++
-        singleFieldParsing(tags, tagsFieldName).toSeq)
+      (tokenize(Some(metrics), metricsFieldName).toSeq ++
+        tokenize(values, valuesFieldName).toSeq ++
+        tokenize(timestamps, timestampsFieldName).toSeq ++
+        tokenize(tags, tagsFieldName).toSeq)
         .groupBy {
           case (topic, _) => topic
         }
@@ -113,10 +116,11 @@ trait MappingConfUtility {
   /**
     * Checks if the query configuration (either kcql or transform query) has been correctly set
     * Parse then the value of either kcql or mappings
+    *
     * @param configs Properties configuration of connector
-    * @return [[Type]] along with List of mappings interface object as string
+    * @return [[MapType]] along with List of mappings interface object as string
     */
-  def validateAndParseMappingsConfig(configs: Map[String, ConfigValue]): (Type, Iterable[String]) = {
+  def validateAndParseMappingsConfig(configs: Map[String, ConfigValue]): (MapType, List[String]) = {
 
     val kcqlConfig       = Try(configs(NSDbConfigs.NSDB_KCQL).value().toString).toOption
     val metricsConfig    = Try(configs(NSDbConfigs.NSDB_MAPPING_METRICS).value().toString).toOption
@@ -152,14 +156,14 @@ trait MappingConfUtility {
     */
   def mapToStringToMappingInterfaces(props: java.util.Map[String, String]): Map[String, Array[MappingInterface]] = {
 
-    val mappingsType  = props.get(NSDbConfigs.NSDB_INNER_ENCODED_MAPPINGS_TYPE)
-    val mappingsValue = props.get(NSDbConfigs.NSDB_INNER_ENCODED_MAPPINGS_VALUE)
+    val mappingsType  = props.get(NSDbConfigs.NSDB_ENCODED_MAPPINGS_TYPE)
+    val mappingsValue = props.get(NSDbConfigs.NSDB_ENCODED_MAPPINGS_VALUE)
 
     val globalDb        = Option(props.get(NSDbConfigs.NSDB_DB))
     val globalNamespace = Option(props.get(NSDbConfigs.NSDB_NAMESPACE))
     val defaultValue    = validateDefaultValue(Option(props.get(NSDbConfigs.NSDB_DEFAULT_VALUE)))
 
-    Type.parse(mappingsType) match {
+    MapType.parse(mappingsType) match {
       case Some(KcqlType) =>
         val kcqls = mappingsValue.split(";").map(Kcql.parse).groupBy(_.getSource)
 
@@ -190,7 +194,7 @@ trait MappingConfUtility {
           }
       case None =>
         throw new IllegalArgumentException(
-          s"Illegal Argument $mappingsType for prop ${NSDbConfigs.NSDB_INNER_ENCODED_MAPPINGS_TYPE}")
+          s"Illegal Argument $mappingsType for prop ${NSDbConfigs.NSDB_ENCODED_MAPPINGS_TYPE}")
     }
   }
 }

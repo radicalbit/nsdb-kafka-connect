@@ -89,8 +89,8 @@ class NSDbSinkConnector extends SinkConnector with MappingConfUtility {
         taskConfigs.put(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRY_INTERVAL,
                         NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRY_INTERVAL_DEFAULT.toString)
         taskConfigs.putAll(configProps)
-        taskConfigs.put(NSDbConfigs.NSDB_INNER_ENCODED_MAPPINGS_TYPE, groupsType.value)         //overwrite
-        taskConfigs.put(NSDbConfigs.NSDB_INNER_ENCODED_MAPPINGS_VALUE, g.asScala.mkString(";")) //overwrite
+        taskConfigs.put(NSDbConfigs.NSDB_ENCODED_MAPPINGS_TYPE, groupsType.value)         //overwrite
+        taskConfigs.put(NSDbConfigs.NSDB_ENCODED_MAPPINGS_VALUE, g.asScala.mkString(";")) //overwrite
         taskConfigs
       }
       .asJava

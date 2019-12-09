@@ -80,8 +80,8 @@ object NSDbConfigs {
   val NSDB_MAPPING_TIMESTAMPS_DOC = "Timestamps value for mapping configuration in dotted notation (optional)"
 
   // inner property
-  val NSDB_INNER_ENCODED_MAPPINGS_TYPE  = "nsdb.inner.encoded.queries.type"
-  val NSDB_INNER_ENCODED_MAPPINGS_VALUE = "nsdb.inner.encoded.queries.value"
+  val NSDB_ENCODED_MAPPINGS_TYPE  = "nsdb.encoded.mappings.type"
+  val NSDB_ENCODED_MAPPINGS_VALUE = "nsdb.encoded.mappings.value"
 
   private val NSDB_GROUP_MAPPING_CONFIG     = "Mapping Configuration"
   private val NSDB_GROUP_SEMANTIC_DELIVERY  = "Semantic Delivery"
