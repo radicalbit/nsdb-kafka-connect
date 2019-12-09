@@ -64,7 +64,10 @@ trait MappingConfUtility {
               case (topic, _) => topic
             }
             .map {
-              case (topic, grouped) => topic -> (fieldName, grouped.map(_._2))
+              case (topic, grouped) =>
+                topic -> (fieldName, grouped.map {
+                  case (_, parsedValue) => parsedValue
+                })
             }
         }
         .getOrElse(Map.empty[String, (String, List[String])])
@@ -73,33 +76,37 @@ trait MappingConfUtility {
       (singleFieldParsing(Some(metrics), metricsFieldName).toSeq ++
         singleFieldParsing(values, valuesFieldName).toSeq ++
         singleFieldParsing(timestamps, timestampsFieldName).toSeq ++
-        singleFieldParsing(tags, tagsFieldName).toSeq).groupBy(_._1).map {
-        case (topic, fields) =>
-          val SupportStructure(metricsValue, valuesValue, timestampsValue, tagsValue) =
-            fields
-              .map {
-                case (_, grouped) => grouped
-              }
-              .foldRight(SupportStructure.empty) {
-                case ((fieldName, list), supportStructure) =>
-                  fieldName match {
-                    case `metricsFieldName` => supportStructure.copy(metrics = supportStructure.metrics ++ list)
-                    case `valuesFieldName`  => supportStructure.copy(values = supportStructure.values ++ list)
-                    case `timestampsFieldName` =>
-                      supportStructure.copy(timestamps = supportStructure.timestamps ++ list)
-                    case `tagsFieldName` => supportStructure.copy(tags = supportStructure.tags ++ list)
-                  }
-              }
+        singleFieldParsing(tags, tagsFieldName).toSeq)
+        .groupBy {
+          case (topic, _) => topic
+        }
+        .map {
+          case (topic, fields) =>
+            val SupportStructure(metricsValue, valuesValue, timestampsValue, tagsValue) =
+              fields
+                .map {
+                  case (_, grouped) => grouped
+                }
+                .foldRight(SupportStructure.empty) {
+                  case ((fieldName, list), supportStructure) =>
+                    fieldName match {
+                      case `metricsFieldName` => supportStructure.copy(metrics = supportStructure.metrics ++ list)
+                      case `valuesFieldName`  => supportStructure.copy(values = supportStructure.values ++ list)
+                      case `timestampsFieldName` =>
+                        supportStructure.copy(timestamps = supportStructure.timestamps ++ list)
+                      case `tagsFieldName` => supportStructure.copy(tags = supportStructure.tags ++ list)
+                    }
+                }
 
-          Mappings(
-            topic = topic,
-            metricFieldName = metricsValue.headOption.getOrElse(
-              throw new IllegalArgumentException(s"Metric field for topic $topic must be defined")),
-            valueFieldName = valuesValue.headOption,
-            timestampFieldName = timestampsValue.headOption,
-            tagsFieldName = tagsValue
-          ).asJson.noSpaces
-      }
+            Mappings(
+              topic = topic,
+              metricFieldName = metricsValue.headOption.getOrElse(
+                throw new IllegalArgumentException(s"Metric field for topic $topic must be defined")),
+              valueFieldName = valuesValue.headOption,
+              timestampFieldName = timestampsValue.headOption,
+              tagsFieldName = tagsValue
+            ).asJson.noSpaces
+        }
     mappings
   }
 
@@ -176,7 +183,10 @@ trait MappingConfUtility {
             case (topic, _) => topic
           }
           .map {
-            case (topic, tuples) => (topic, tuples.map(_._2))
+            case (topic, tuples) =>
+              (topic, tuples.map {
+                case (_, interface) => interface
+              })
           }
       case None =>
         throw new IllegalArgumentException(
