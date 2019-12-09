@@ -113,7 +113,7 @@ trait MappingConfUtility {
   /**
     * Checks if the query configuration (either kcql or transform query) has been correctly set
     * Parse then the value of either kcql or mappings
-    * @param configs
+    * @param configs Properties configuration of connector
     * @return [[Type]] along with List of mappings interface object as string
     */
   def validateAndParseMappingsConfig(configs: Map[String, ConfigValue]): (Type, Iterable[String]) = {
