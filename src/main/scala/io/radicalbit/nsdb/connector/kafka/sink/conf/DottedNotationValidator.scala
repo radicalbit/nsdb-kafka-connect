@@ -23,11 +23,11 @@ import org.apache.kafka.common.config.{ConfigDef, ConfigException}
   */
 object DottedNotationValidator extends ConfigDef.Validator {
   // format: [topicName1.fieldName,topicName2.fieldName]
-  private val dottedNotation = "[a-zA-Z0-9_]+\\.[a-zA-Z0-9_]+(,[a-zA-Z0-9_]+\\.[a-zA-Z0-9_]+)*".r
+  private val dottedNotationList = "[a-zA-Z0-9_]+\\.[a-zA-Z0-9_]+(,[a-zA-Z0-9_]+\\.[a-zA-Z0-9_]+)*".r
 
   def ensureValid(name: String, value: Any): Unit = {
     Option(value).foreach { v =>
-      if (!v.toString.matches(dottedNotation.regex))
+      if (!v.toString.matches(dottedNotationList.regex))
         throw new ConfigException(name, value, "Bad field format. Expected: [topicName.fieldName,topicName.fieldName]")
     }
   }
