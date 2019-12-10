@@ -50,13 +50,13 @@ trait MappingConfUtility {
     val timestampsFieldName = "TIMESTAMPS"
     val tagsFieldName       = "TAGS"
 
-    val dottedNotation = "[a-zA-Z0-9_]+\\.[a-zA-Z0-9_]+".r
+    val dottedNotationToken = "[a-zA-Z0-9_]+\\.[a-zA-Z0-9_]+".r
 
     //we should use a parser combinator here
     def tokenize(optF: Option[String], fieldName: String): Map[String, (String, List[String])] =
       optF
         .map { f =>
-          dottedNotation
+          dottedNotationToken
             .findAllMatchIn(f)
             .toList
             .flatMap(_.toString().split('.').toList match { // safe because of dotted notation validation
