@@ -40,5 +40,8 @@ class DottedNotationValidatorSpec extends FlatSpec with Matchers {
   "DottedNotationValidator" should "throw ConfigException for invalid format value 3" in {
     an[ConfigException] shouldBe thrownBy(DottedNotationValidator.ensureValid(fieldName, ""))
   }
+  "DottedNotationValidator" should "throw ConfigException for invalid format value 4" in {
+    DottedNotationValidator.ensureValid(fieldName, "-still_a.valid-format,_even.-this")
+  }
 
 }
