@@ -16,7 +16,7 @@
 
 package io.radicalbit.nsdb.connector.kafka.sink
 
-import cats.instances.future._
+import cats.Id
 import com.datamountaineer.kcql.Kcql
 import com.typesafe.scalalogging.{Logger, StrictLogging}
 import io.radicalbit.nsdb.api.scala.{Bit, Db, NSDB}
@@ -162,32 +162,46 @@ object NSDbSinkWriter {
 
   private case class WriteFailureException(msg: String) extends RuntimeException(msg)
 
+  /**
+    * Manipulate future result according to semantic delivery policy
+    * @param semanticDelivery [[SemanticDelivery]] if not defined, at_most_once delivery is chosen
+    * @param fResult future result of nsdb grpc write
+    * @param maxRetries maximum number of retries if at_least_once semantic delivery is chosen
+    * @param retryInterval time interval between two retries if at least once semantic delivery is chosen
+    * @param timeout time to wait for future completing if at least once semantic delivery is chosen
+    */
   def writeWithDeliveryPolicy(semanticDelivery: Option[SemanticDelivery],
                               fResult: => Future[List[RPCInsertResult]],
                               maxRetries: Int,
                               retryInterval: Duration,
                               timeout: Duration) = {
 
-    val policy = RetryPolicies.limitRetries(maxRetries - 1)
+    val policy = RetryPolicies.limitRetries[Id](maxRetries - 1)
 
     val finiteDurationSleep: FiniteDuration = FiniteDuration(retryInterval._1, retryInterval._2)
 
-    def onFailure(throwable: Throwable, details: RetryDetails): Future[Unit] = {
-      logger.debug(throwable.getMessage)
-      Sleep[Future].sleep(finiteDurationSleep)
+    def wasSuccessful: Try[List[RPCInsertResult]] => Boolean =
+      t => t.map(_.forall(_.completedSuccessfully)).getOrElse(false)
+
+    def onFailure(fail: Try[List[RPCInsertResult]], details: RetryDetails): Unit = {
+      logger.debug("Retrying...")
+      Sleep[Id].sleep(finiteDurationSleep)
     }
 
     semanticDelivery match {
       case Some(AtLeastOnce) =>
-        Await.result(
-          retryingOnAllErrors.apply(policy, onFailure)(fResult.flatMap {
-            case rPCInsertResults if !rPCInsertResults.forall(_.completedSuccessfully) =>
-              Future.failed(WriteFailureException("Field 'completedSuccessfully' returns false"))
-            case rPCInsertResults =>
-              Future.successful(rPCInsertResults)
-          }),
-          timeout
-        )
+        retrying(policy, wasSuccessful, onFailure)(
+          Try(
+            Await.result(
+              fResult.flatMap {
+                case rPCInsertResults if !rPCInsertResults.forall(_.completedSuccessfully) =>
+                  Future.failed(WriteFailureException("Field 'completedSuccessfully' returns false"))
+                case rPCInsertResults =>
+                  Future.successful(rPCInsertResults)
+              },
+              timeout
+            ))
+        ).fold(t => throw t, identity)
       case _ =>
         fResult
     }
@@ -197,7 +211,6 @@ object NSDbSinkWriter {
     * Validate the semantic delivery property according to possible fixed values
     * @param configName
     * @param configValue
-    * @return
     */
   def validateSemanticDelivery(configName: String, configValue: String): Option[SemanticDelivery] = {
     val maybeProp = SemanticDelivery.parse(configValue)
