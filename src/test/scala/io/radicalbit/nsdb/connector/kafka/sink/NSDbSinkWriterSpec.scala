@@ -341,7 +341,7 @@ class NSDbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
     NSDbSinkWriter.writeWithDeliveryPolicy(Some(AtLeastOnce), futureResult, maxRetries, retryInterval, timeout) shouldBe result
   }
 
-  "SinkRecordConversion" should "timeout" in {
+  "SinkRecordConversion" should "thrown an TimeoutException whether future does not complete in time" in {
     import scala.concurrent.ExecutionContext.Implicits.global
 
     val result: List[RPCInsertResult] =
