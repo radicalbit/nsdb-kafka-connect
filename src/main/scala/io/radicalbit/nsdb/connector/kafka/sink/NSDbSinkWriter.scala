@@ -184,7 +184,7 @@ object NSDbSinkWriter {
       t => t.map(_.forall(_.completedSuccessfully)).getOrElse(false)
 
     def onFailure(fail: Try[List[RPCInsertResult]], details: RetryDetails): Unit = {
-      logger.debug("Retrying...")
+      logger.warn("Retrying...")
       Sleep[Id].sleep(finiteDurationSleep)
     }
 
