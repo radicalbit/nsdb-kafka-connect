@@ -314,6 +314,10 @@ class NSDbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
     bit shouldBe expectedBit
   }
 
+  private val maxRetries    = 3
+  private val retryInterval = 1.second
+  private val timeout       = 5.seconds
+
   "SinkRecordConversion" should "thrown an Exception whether one of the result has 'completedSuccessfully' set to false" in {
     import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -325,7 +329,7 @@ class NSDbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
     }
 
     an[RuntimeException] shouldBe thrownBy(
-      NSDbSinkWriter.writeWithDeliveryPolicy(Some(AtLeastOnce), futureResult, 10, 1.second, 20.seconds))
+      NSDbSinkWriter.writeWithDeliveryPolicy(Some(AtLeastOnce), futureResult, maxRetries, retryInterval, timeout))
   }
 
   "SinkRecordConversion" should "correctly return list of successfully result" in {
@@ -334,7 +338,22 @@ class NSDbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
     val result       = List(RPCInsertResult(completedSuccessfully = true), RPCInsertResult(completedSuccessfully = true))
     def futureResult = Future(result)
 
-    NSDbSinkWriter.writeWithDeliveryPolicy(Some(AtLeastOnce), futureResult, 10, 1.second, 20.seconds) shouldBe result
+    NSDbSinkWriter.writeWithDeliveryPolicy(Some(AtLeastOnce), futureResult, maxRetries, retryInterval, timeout) shouldBe result
+  }
+
+  "SinkRecordConversion" should "thrown an TimeoutException whether future does not complete in time" in {
+    import scala.concurrent.ExecutionContext.Implicits.global
+
+    val result: List[RPCInsertResult] =
+      List(RPCInsertResult(completedSuccessfully = true), RPCInsertResult(completedSuccessfully = true))
+    def futureResult = Future {
+      loggerImpl.info("Evaluating the future...")
+      Thread.sleep(10000)
+      result
+    }
+
+    an[java.util.concurrent.TimeoutException] shouldBe thrownBy(
+      NSDbSinkWriter.writeWithDeliveryPolicy(Some(AtLeastOnce), futureResult, maxRetries, retryInterval, timeout))
   }
 
   "SinkRecordConversion" should "thrown an Exception whether the future fails" in {
@@ -345,7 +364,7 @@ class NSDbSinkWriterSpec extends FlatSpec with Matchers with OneInstancePerTest 
     }
 
     an[RuntimeException] shouldBe thrownBy(
-      NSDbSinkWriter.writeWithDeliveryPolicy(Some(AtLeastOnce), futureResult, 10, 1.second, 20.seconds))
+      NSDbSinkWriter.writeWithDeliveryPolicy(Some(AtLeastOnce), futureResult, maxRetries, retryInterval, timeout))
   }
 
   "SinkRecordConversion" should "validate semantic delivery according to the possible values" in {
