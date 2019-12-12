@@ -17,8 +17,6 @@
 package io.radicalbit.nsdb.connector.kafka.sink
 
 import cats.Id
-import com.datamountaineer.kcql.Kcql
-import cats.instances.future._
 import com.typesafe.scalalogging.{Logger, StrictLogging}
 import io.radicalbit.nsdb.api.scala.{Bit, NSDB}
 import io.radicalbit.nsdb.connector.kafka.sink.conf.Constants._
