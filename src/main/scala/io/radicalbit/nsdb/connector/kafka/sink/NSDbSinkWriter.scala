@@ -33,7 +33,7 @@ import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 /**
   * Handles writes to NSDb.
@@ -201,7 +201,10 @@ object NSDbSinkWriter {
               },
               timeout
             ))
-        ).fold(t => throw t, identity)
+        ) match {
+          case Failure(exception) => throw exception
+          case Success(value)     => value
+        }
       case _ =>
         fResult
     }
