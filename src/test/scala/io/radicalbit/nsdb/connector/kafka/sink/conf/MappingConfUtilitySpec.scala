@@ -16,10 +16,11 @@
 
 package io.radicalbit.nsdb.connector.kafka.sink.conf
 
-import io.radicalbit.nsdb.connector.kafka.sink.models.{ParsedKcql, EnrichedMapping, Mappings}
+import io.radicalbit.nsdb.connector.kafka.sink.models.{EnrichedMapping, Mappings, ParsedKcql}
 import org.scalatest.{FlatSpec, Matchers}
 import io.circe.generic.auto._
 import io.circe.syntax._
+import org.apache.kafka.common.config.ConfigException
 
 import scala.collection.JavaConverters._
 
@@ -87,10 +88,10 @@ class MappingConfUtilitySpec extends FlatSpec with Matchers with MappingConfUtil
     val valueFieldName = "topicC.y,topicB.y"
     val props          = Map[String, String](NSDbConfigs.NSDB_MAPPING_VALUES -> valueFieldName)
 
-    an[IllegalArgumentException] shouldBe thrownBy(validateQueryConfTest(props))
+    an[ConfigException] shouldBe thrownBy(validateQueryConfTest(props))
   }
 
-  "QueryConfUtility" should "thrown an IllegalArgumentException whether metric for a configuration is not set" in {
+  "QueryConfUtility" should "thrown an ConfigException whether metric for a configuration is not set" in {
     val metricFieldName    = "topicC.bitC"
     val valueFieldName     = "topicC.y,topicB.y"
     val timestampFieldName = "topicC.timestamp,topicB.timestamp"
@@ -103,7 +104,7 @@ class MappingConfUtilitySpec extends FlatSpec with Matchers with MappingConfUtil
       NSDbConfigs.NSDB_MAPPING_TAGS       -> tagsFieldName
     )
 
-    an[IllegalArgumentException] shouldBe thrownBy(validateQueryConfTest(props))
+    an[ConfigException] shouldBe thrownBy(validateQueryConfTest(props))
   }
 
   "QueryConfUtility" should "correctly parses parsed kcql object" in {
@@ -129,7 +130,7 @@ class MappingConfUtilitySpec extends FlatSpec with Matchers with MappingConfUtil
       ))
   }
 
-  "QueryConfUtility" should "throws an IllegalArgumentException whether nsdb.inner.encoded.queries.type prop is wrongly set" in {
+  "QueryConfUtility" should "throws an ConfigException whether nsdb.inner.encoded.queries.type prop is wrongly set" in {
 
     val kcqlQuery =
       "INSERT INTO bitC SELECT d as db, n as namespace, x AS a, y AS value, z as b, t as c FROM topicC WITHTIMESTAMP sys_time() WITHTAG(a,b)"
@@ -137,7 +138,7 @@ class MappingConfUtilitySpec extends FlatSpec with Matchers with MappingConfUtil
     val props = Map[String, String](NSDbConfigs.NSDB_ENCODED_MAPPINGS_TYPE -> "wrong-value",
                                     NSDbConfigs.NSDB_ENCODED_MAPPINGS_VALUE -> kcqlQuery)
 
-    an[IllegalArgumentException] shouldBe thrownBy(mapToStringToMappingInterfaces(props.asJava))
+    an[ConfigException] shouldBe thrownBy(mapToStringToMappingInterfaces(props.asJava))
   }
 
   "QueryConfUtility" should "correctly parses enriched mapping object" in {

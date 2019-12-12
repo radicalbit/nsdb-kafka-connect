@@ -341,7 +341,6 @@ object NSDbSinkWriter {
           val globals: mutable.ListBuffer[(String, Any)] = mutable.ListBuffer.empty[(String, Any)]
           globalDb.foreach(db => globals += ((db, db)))
           globalNamespace.foreach(ns => globals += ((ns, ns)))
-          defaultValue.foreach(v => globals += (("defaultValue", v)))
 
           (fields union globals).toMap
         case other =>

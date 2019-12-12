@@ -27,7 +27,7 @@ object EnrichedMapping {
     require(globalNamespace.isDefined, "A global namespace configuration must be defined")
     require(mappings.metricFieldName.nonEmpty, "Metric value in Transform must be defined")
     require(
-      mappings.valueFieldName.nonEmpty || defaultValue.isDefined,
+      mappings.valueFieldName.isDefined || defaultValue.isDefined,
       "Value alias in transform must be defined"
     )
 
