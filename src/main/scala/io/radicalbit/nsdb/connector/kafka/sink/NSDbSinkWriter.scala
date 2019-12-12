@@ -101,16 +101,16 @@ class NSDbSinkWriter(connection: NSDB,
 
     val recordMaps = records.map(parse(_, globalDb, globalNamespace, defaultValue))
 
-    mappingInterfaces.foreach { parsedKcql =>
+    mappingInterfaces.foreach { mappingInterface =>
       logger.debug(
         "Handling query: \t{}\n Found also user params db: {}, namespace: {}, defaultValue: {}",
-        parsedKcql,
+        mappingInterface,
         globalDb.isDefined,
         globalNamespace.isDefined,
         defaultValue.isDefined
       )
       val bitSeq: Future[List[Bit]] = Future.sequence(recordMaps.map(map => {
-        val convertedBit = parsedKcql.convertToBit(map)
+        val convertedBit = mappingInterface.convertToBit(map)
 
         if (initInfoProvided)
           initializedCoordinates.get((convertedBit.db, convertedBit.namespace, convertedBit.metric)) match {
