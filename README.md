@@ -34,12 +34,20 @@ Name  | Description  | Type  | Value
 --|---|---|--
 nsdb.host  | Hostname of the NSDb instance to connect to | String | default value is `localhost`
 nsdb.port  | Port of the NSDb instance to connect to | Int | default value is `7817`
-nsdb.kcql  | Kcql expressions used to map topic data to NSDb bits | String  | semicolon separated Kcql expressions
+nsdb.kcql  | Kcql expressions used to map topic data to NSDb bits | String  | semicolon separated Kcql expressions.<br>Note: It's optional whether `nsdb.mapping.metrics` is set.
 nsdb.db  | NSDb db to use in case no mappig is provided in the Kcql | String  |  If a mapping is provided in the Kcql this config will be overridden
 nsdb.namespace  | NSDb db to use in case no mappig is provided in the Kcql | String  | If a mapping is provided in the Kcql this config will be overridden
 nsdb.defaultValue | default value | Numeric | if a value alias is provided in the Kcql expression this config will be ignored
 nsdb.metric.retention.policy | NSDb custom retention policy | String | Custom NSDb retention policy applied to the metric specified in the Kcql statements formatted as a Scala Duration (e.g. 2 d, 2d, 2 days).<br>If this configuration is not provided, no retention policy will be applied to the metrics. 
 nsdb.shard.interval | NSDb custom shard interval policy | String | NSDb shard interval applied to the metric specified in the Kcql statements formatted as a Scala Duration (e.g. 2 d, 2d, 2 days).<br>If this configuration is not provided, the default shard interval will be applied to the metrics.
+nsdb.timeout | Timeout used for testing nsdb connection | String | Default value is `10 seconds`
+nsdb.semantic.delivery | Semantic delivery for writing data into nsdb | String | Two possible values: `at_most_once` (Default), `at_least_once`
+nsdb.at.least.once.retries | Number of maximum writing retries when `at_least_once` semantic is set | Int | Default value is `10`
+nsdb.at.least.once.retry.interval | Time to sleep from a retry to another when `at_least_once` semantic is set | String | Default value is `500 milliseconds`
+nsdb.mapping.metrics | Colon separated list of metrics for topics | String | Format: `topicA.metricFieldName,topicB.metricFieldName` <br>Note: <li>It is mutually exclusive with `nsdb.kcql`</li><li>If it is set, `nsdb.db` and `nsdb.namespace` must be defined</li>
+nsdb.mapping.values | (Optional) Colon separated list of values for topics | String | Format: `topicA.valueFieldName,topicB.valueFieldName`
+nsdb.mapping.tags | (Optional) Colon separated list of tags for topics | String | Format: `topicA.tagFieldName,topicB.tagFieldName`
+nsdb.mapping.timestamps | (Optional) Colon separated list of timestamps for topics | String | Format: `topicA.timestampFieldName,topicB.timestampFieldName`
 
 ## KCQL Support
 
@@ -65,7 +73,7 @@ INSERT INTO bitB SELECT x AS a, y AS value, z as c FROM topicB WITHTIMESTAMP sys
 INSERT INTO bitC SELECT d as db, n as namespace, x AS a, y AS value, z as b, t as c FROM topicC WITHTIMESTAMP sys_time() WITHTAG(a,b)
 ```
 
-## example
+## example kcql
 ```bash
 echo '{"name":"manufacturing-nsdb-sink",
 "config": {"connector.class":"io.radicalbit.nsdb.connector.kafka.sink.NSDbSinkConnector",
@@ -79,7 +87,20 @@ echo '{"name":"manufacturing-nsdb-sink",
  INSERT INTO bitC SELECT d as db, n as namespace, x AS a, y AS value, z as b, t as c FROM topicC WITHTIMESTAMP sys_time() WITHTAG(a,b)"
 }}' | curl -X POST -d @- http://kafkaconnecthost:8083/connectors --header "content-Type:application/json"
 ```
-
+## example mapping
+```bash
+echo '{"name":"manufacturing-nsdb-sink",
+"config": {"connector.class":"io.radicalbit.nsdb.connector.kafka.sink.NSDbSinkConnector",
+"tasks.max":"1","nsdb.host":"nsdbhost",
+"topics":"topicA, topicB, topicC",
+"nsdb.metric.retention.policy": "2d",
+"nsdb.shard.interval": "2d",
+"nsdb.mapping.metrics": "topicA.bitA,topicB.bitB,topicC.bitC",
+"nsdb.mapping.values": "topicA.y,topicB.y,topicC.y",
+"nsdb.mapping.tags": "topicC.x,topicC.z",
+"nsdb.mapping.timestamps": "topicA.z"
+}}' | curl -X POST -d @- http://kafkaconnecthost:8083/connectors --header "content-Type:application/json"
+```
 
 ## License
 

@@ -52,4 +52,23 @@ object Constants {
       }
   }
 
+  object MapType {
+    def parse(s: String): Option[MapType] =
+      s.toLowerCase match {
+        case KcqlType.value    => Some(KcqlType)
+        case MappingType.value => Some(MappingType)
+        case _                 => None
+      }
+  }
+
+  sealed trait MapType {
+    def value: String
+  }
+  case object KcqlType extends MapType {
+    val value: String = "kcql-type"
+  }
+  case object MappingType extends MapType {
+    val value: String = "mapping-type"
+  }
+
 }

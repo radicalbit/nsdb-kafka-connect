@@ -18,7 +18,7 @@ package io.radicalbit.nsdb.connector.kafka.sink
 
 import java.util.{List => JList, Map => JMap}
 
-import io.radicalbit.nsdb.connector.kafka.sink.conf.NSDbConfigs
+import io.radicalbit.nsdb.connector.kafka.sink.conf.{NSDbConfigs, MappingConfUtility}
 import org.apache.kafka.common.config.{ConfigDef, ConfigValue}
 import org.apache.kafka.common.utils.AppInfoParser
 import org.apache.kafka.connect.sink.SinkConnector
@@ -31,7 +31,7 @@ import scala.collection.JavaConverters._
   * Kafka connect NSDb Sink connector
   *
   **/
-class NSDbSinkConnector extends SinkConnector {
+class NSDbSinkConnector extends SinkConnector with MappingConfUtility {
 
   private var configProps: JMap[String, String] = _
   private val log                               = LoggerFactory.getLogger(classOf[NSDbSinkConnector])
@@ -70,16 +70,15 @@ class NSDbSinkConnector extends SinkConnector {
     * @return Configurations for Tasks.
     */
   override def taskConfigs(maxTasks: Int): JList[JMap[String, String]] = {
-    val raw = configs.get(NSDbConfigs.NSDB_KCQL)
-    require(raw != null && raw.isDefined, s"No ${NSDbConfigs.NSDB_KCQL} provided!")
 
-    val kcqls  = raw.get.value().toString.split(";")
-    val groups = ConnectorUtils.groupPartitions(kcqls.toList.asJava, maxTasks).asScala
+    val (groupsType, mappings) = validateAndParseMappingsConfig(configs)
+
+    val groups = ConnectorUtils.groupPartitions(mappings.toList.asJava, maxTasks).asScala
 
     //split up the kcql statement based on the number of tasks.
     groups
       .filterNot(g => g.isEmpty)
-      .map(g => {
+      .map { g =>
         val taskConfigs: java.util.Map[String, String] = new java.util.HashMap[String, String]
         //put the default host, port and semantic delivery to be available in task in case they are not provided.
         taskConfigs.put(NSDbConfigs.NSDB_HOST, NSDbConfigs.NSDB_HOST_DEFAULT)
@@ -90,9 +89,10 @@ class NSDbSinkConnector extends SinkConnector {
         taskConfigs.put(NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRY_INTERVAL,
                         NSDbConfigs.NSDB_AT_LEAST_ONCE_RETRY_INTERVAL_DEFAULT.toString)
         taskConfigs.putAll(configProps)
-        taskConfigs.put(NSDbConfigs.NSDB_KCQL, g.asScala.mkString(";")) //overwrite
+        taskConfigs.put(NSDbConfigs.NSDB_ENCODED_MAPPINGS_TYPE, groupsType.value)         //overwrite
+        taskConfigs.put(NSDbConfigs.NSDB_ENCODED_MAPPINGS_VALUE, g.asScala.mkString(";")) //overwrite
         taskConfigs
-      })
+      }
       .asJava
   }
 

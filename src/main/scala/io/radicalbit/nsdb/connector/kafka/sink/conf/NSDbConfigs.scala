@@ -33,7 +33,7 @@ object NSDbConfigs {
   val NSDB_PORT_DEFAULT = 7817
 
   val NSDB_KCQL     = "nsdb.kcql"
-  val NSDB_KCQL_DOC = "Kcql semicolon separated list"
+  val NSDB_KCQL_DOC = "Kcql semicolon separated list (mutually exclusive with nsdb.mapping.metrics)"
 
   val NSDB_DB     = "nsdb.db"
   val NSDB_DB_DOC = "NSDb db (optional)"
@@ -63,8 +63,30 @@ object NSDbConfigs {
   val NSDB_AT_LEAST_ONCE_RETRIES_DEFAULT = 10
 
   val NSDB_AT_LEAST_ONCE_RETRY_INTERVAL         = "nsdb.at.least.once.retry.interval"
-  val NSDB_AT_LEAST_ONCE_RETRY_INTERVAL_DOC     = "Time to sleep from a retry to anther when AT_LEAST_ONCE semantic is set"
+  val NSDB_AT_LEAST_ONCE_RETRY_INTERVAL_DOC     = "Time to sleep from a retry to another when AT_LEAST_ONCE semantic is set"
   val NSDB_AT_LEAST_ONCE_RETRY_INTERVAL_DEFAULT = "500 milliseconds"
+
+  val NSDB_MAPPING_METRICS = "nsdb.mapping.metrics"
+  val NSDB_MAPPING_METRICS_DOC =
+    "Metrics value for mapping configuration in dotted notation (mutually exclusive with nsdb.kcql)"
+
+  val NSDB_MAPPING_VALUES     = "nsdb.mapping.values"
+  val NSDB_MAPPING_VALUES_DOC = "Values value for mapping configuration in dotted notation (optional)"
+
+  val NSDB_MAPPING_TAGS     = "nsdb.mapping.tags"
+  val NSDB_MAPPING_TAGS_DOC = "Tags value for mapping configuration in dotted notation (optional)"
+
+  val NSDB_MAPPING_TIMESTAMPS     = "nsdb.mapping.timestamps"
+  val NSDB_MAPPING_TIMESTAMPS_DOC = "Timestamps value for mapping configuration in dotted notation (optional)"
+
+  // inner property
+  val NSDB_ENCODED_MAPPINGS_TYPE  = "nsdb.encoded.mappings.type"
+  val NSDB_ENCODED_MAPPINGS_VALUE = "nsdb.encoded.mappings.value"
+
+  private val NSDB_GROUP_MAPPING_CONFIG     = "Mapping Configuration"
+  private val NSDB_GROUP_SEMANTIC_DELIVERY  = "Semantic Delivery"
+  private val NSDB_GROUP_CONNECTION         = "Connection"
+  private val NSDB_GROUP_METRIC_INIT_PARAMS = "Metric Init Params"
 
   /**
     * @return sink expected configuration:
@@ -92,6 +114,14 @@ object NSDbConfigs {
     *         - nsdb.at.least.once.retries number of maximum writing retries
     *
     *         - nsdb.at.least.once.retry.interval time to sleep from a retry to another
+    *
+    *         - nsdb.mapping.metrics colon separated list of metrics
+    *
+    *         - nsdb.mapping.values colon separated list of values
+    *
+    *         - nsdb.mapping.tags colon separated list of tags
+    *
+    *         - nsdb.mapping.timestamps colon separated list of timestamps
     */
   def configDef: ConfigDef =
     new ConfigDef()
@@ -100,7 +130,7 @@ object NSDbConfigs {
               NSDB_HOST_DEFAULT,
               Importance.HIGH,
               NSDB_HOST_DOC,
-              "Connection",
+              NSDB_GROUP_CONNECTION,
               1,
               ConfigDef.Width.MEDIUM,
               NSDB_HOST)
@@ -109,15 +139,16 @@ object NSDbConfigs {
               NSDB_PORT_DEFAULT,
               Importance.MEDIUM,
               NSDB_PORT_DOC,
-              "Connection",
+              NSDB_GROUP_CONNECTION,
               2,
               ConfigDef.Width.MEDIUM,
               NSDB_PORT)
       .define(NSDB_KCQL,
               Type.STRING,
+              null,
               Importance.HIGH,
               NSDB_KCQL_DOC,
-              "Connection",
+              NSDB_GROUP_CONNECTION,
               3,
               ConfigDef.Width.MEDIUM,
               NSDB_KCQL)
@@ -130,35 +161,111 @@ object NSDbConfigs {
         null,
         Importance.MEDIUM,
         NSDB_METRIC_RETENTION_POLICY_DOC,
-        "Metric Init Params",
+        NSDB_GROUP_METRIC_INIT_PARAMS,
         1,
         ConfigDef.Width.MEDIUM,
         NSDB_METRIC_RETENTION_POLICY
       )
-      .define(NSDB_SHARD_INTERVAL,
+      .define(
+        NSDB_SHARD_INTERVAL,
+        Type.STRING,
+        null,
+        Importance.MEDIUM,
+        NSDB_SHARD_INTERVAL_DOC,
+        NSDB_GROUP_METRIC_INIT_PARAMS,
+        2,
+        ConfigDef.Width.MEDIUM,
+        NSDB_SHARD_INTERVAL
+      )
+      .define(NSDB_TIMEOUT,
               Type.STRING,
-              null,
+              NSDB_TIMEOUT_DEFAULT,
               Importance.MEDIUM,
-              NSDB_SHARD_INTERVAL_DOC,
-              "Metric Init Params",
-              2,
+              NSDB_TIMEOUT_DOC,
+              NSDB_GROUP_CONNECTION,
+              4,
               ConfigDef.Width.MEDIUM,
-              NSDB_SHARD_INTERVAL)
-      .define(NSDB_TIMEOUT, Type.STRING, NSDB_TIMEOUT_DEFAULT, Importance.MEDIUM, NSDB_TIMEOUT_DOC)
-      .define(NSDB_SEMANTIC_DELIVERY,
-              Type.STRING,
-              NSDB_SEMANTIC_DELIVERY_DEFAULT,
-              Importance.MEDIUM,
-              NSDB_SEMANTIC_DELIVERY_DOC)
-      .define(NSDB_AT_LEAST_ONCE_RETRIES,
-              Type.INT,
-              NSDB_AT_LEAST_ONCE_RETRIES_DEFAULT,
-              Importance.LOW,
-              NSDB_AT_LEAST_ONCE_RETRIES_DOC)
-      .define(NSDB_AT_LEAST_ONCE_RETRY_INTERVAL,
-              Type.STRING,
-              NSDB_AT_LEAST_ONCE_RETRY_INTERVAL_DEFAULT,
-              Importance.LOW,
-              NSDB_AT_LEAST_ONCE_RETRY_INTERVAL_DOC)
-
+              NSDB_TIMEOUT)
+      .define(
+        NSDB_SEMANTIC_DELIVERY,
+        Type.STRING,
+        NSDB_SEMANTIC_DELIVERY_DEFAULT,
+        ConfigDef.ValidString.in(Constants.AtMostOnce.value, Constants.AtLeastOnce.value),
+        Importance.MEDIUM,
+        NSDB_SEMANTIC_DELIVERY_DOC,
+        NSDB_GROUP_SEMANTIC_DELIVERY,
+        1,
+        ConfigDef.Width.MEDIUM,
+        NSDB_SEMANTIC_DELIVERY
+      )
+      .define(
+        NSDB_AT_LEAST_ONCE_RETRIES,
+        Type.INT,
+        NSDB_AT_LEAST_ONCE_RETRIES_DEFAULT,
+        Importance.LOW,
+        NSDB_AT_LEAST_ONCE_RETRIES_DOC,
+        NSDB_GROUP_SEMANTIC_DELIVERY,
+        2,
+        ConfigDef.Width.MEDIUM,
+        NSDB_AT_LEAST_ONCE_RETRIES
+      )
+      .define(
+        NSDB_AT_LEAST_ONCE_RETRY_INTERVAL,
+        Type.STRING,
+        NSDB_AT_LEAST_ONCE_RETRY_INTERVAL_DEFAULT,
+        Importance.LOW,
+        NSDB_AT_LEAST_ONCE_RETRY_INTERVAL_DOC,
+        NSDB_GROUP_SEMANTIC_DELIVERY,
+        3,
+        ConfigDef.Width.MEDIUM,
+        NSDB_AT_LEAST_ONCE_RETRY_INTERVAL
+      )
+      .define(
+        NSDB_MAPPING_METRICS,
+        Type.STRING,
+        null,
+        DottedNotationValidator,
+        Importance.HIGH,
+        NSDB_MAPPING_METRICS_DOC,
+        NSDB_GROUP_MAPPING_CONFIG,
+        1,
+        ConfigDef.Width.MEDIUM,
+        NSDB_MAPPING_METRICS
+      )
+      .define(
+        NSDB_MAPPING_VALUES,
+        Type.STRING,
+        null,
+        DottedNotationValidator,
+        Importance.HIGH,
+        NSDB_MAPPING_VALUES_DOC,
+        NSDB_GROUP_MAPPING_CONFIG,
+        2,
+        ConfigDef.Width.MEDIUM,
+        NSDB_MAPPING_VALUES
+      )
+      .define(
+        NSDB_MAPPING_TAGS,
+        Type.STRING,
+        null,
+        DottedNotationValidator,
+        Importance.HIGH,
+        NSDB_MAPPING_TAGS_DOC,
+        NSDB_GROUP_MAPPING_CONFIG,
+        3,
+        ConfigDef.Width.MEDIUM,
+        NSDB_MAPPING_TAGS
+      )
+      .define(
+        NSDB_MAPPING_TIMESTAMPS,
+        Type.STRING,
+        null,
+        DottedNotationValidator,
+        Importance.HIGH,
+        NSDB_MAPPING_TIMESTAMPS_DOC,
+        NSDB_GROUP_MAPPING_CONFIG,
+        4,
+        ConfigDef.Width.MEDIUM,
+        NSDB_MAPPING_TIMESTAMPS
+      )
 }

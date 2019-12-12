@@ -17,10 +17,10 @@
 package io.radicalbit.nsdb.connector.kafka.sink
 
 import cats.Id
-import com.datamountaineer.kcql.Kcql
 import com.typesafe.scalalogging.{Logger, StrictLogging}
-import io.radicalbit.nsdb.api.scala.{Bit, Db, NSDB}
+import io.radicalbit.nsdb.api.scala.{Bit, NSDB}
 import io.radicalbit.nsdb.connector.kafka.sink.conf.Constants._
+import io.radicalbit.nsdb.connector.kafka.sink.models.MappingInterface
 import io.radicalbit.nsdb.rpc.response.RPCInsertResult
 import org.apache.kafka.connect.data.Schema.Type
 import org.apache.kafka.connect.data._
@@ -39,7 +39,7 @@ import scala.util.{Failure, Success, Try}
   * Handles writes to NSDb.
   */
 class NSDbSinkWriter(connection: NSDB,
-                     kcqls: Map[String, Array[Kcql]],
+                     stringToMappingInterfaces: Map[String, Array[MappingInterface]],
                      globalDb: Option[String],
                      globalNamespace: Option[String],
                      defaultValue: Option[java.math.BigDecimal],
@@ -57,11 +57,6 @@ class NSDbSinkWriter(connection: NSDB,
 
   val initializedCoordinates: mutable.Map[(String, String, String), Boolean] = mutable.Map.empty
 
-  val parsedKcql: Map[String, Array[ParsedKcql]] = kcqls.map {
-    case (topic, rawKcqlArray) =>
-      (topic, rawKcqlArray.map(kcql => ParsedKcql(kcql, globalDb, globalNamespace, defaultValue)))
-  }
-
   /**
     * Write a list of SinkRecords to NSDb.
     *
@@ -77,7 +72,7 @@ class NSDbSinkWriter(connection: NSDB,
         case (topic, entries) =>
           writeRecords(topic,
                        entries,
-                       parsedKcql.getOrElse(topic, Array.empty),
+                       stringToMappingInterfaces.getOrElse(topic, Array.empty),
                        globalDb,
                        globalNamespace,
                        defaultValue)
@@ -93,26 +88,29 @@ class NSDbSinkWriter(connection: NSDB,
     **/
   private def writeRecords(topic: String,
                            records: List[SinkRecord],
-                           kcqls: Array[ParsedKcql],
+                           mappingInterfaces: Array[MappingInterface],
                            globalDb: Option[String],
                            globalNamespace: Option[String],
                            defaultValue: Option[java.math.BigDecimal]): Unit = {
-    logger.debug("Handling {} records for topic {}. Found also {} kcql queries.", records.size, topic, kcqls)
+    logger.debug("Handling {} records for topic {}. Found also {} kcql queries.",
+                 records.size,
+                 topic,
+                 mappingInterfaces)
 
     import NSDbSinkWriter.{logger => _, _}
 
     val recordMaps = records.map(parse(_, globalDb, globalNamespace, defaultValue))
 
-    kcqls.foreach(parsedKcql => {
+    mappingInterfaces.foreach { mappingInterface =>
       logger.debug(
         "Handling query: \t{}\n Found also user params db: {}, namespace: {}, defaultValue: {}",
-        parsedKcql,
+        mappingInterface,
         globalDb.isDefined,
         globalNamespace.isDefined,
         defaultValue.isDefined
       )
       val bitSeq: Future[List[Bit]] = Future.sequence(recordMaps.map(map => {
-        val convertedBit = convertToBit(parsedKcql, map)
+        val convertedBit = mappingInterface.convertToBit(map)
 
         if (initInfoProvided)
           initializedCoordinates.get((convertedBit.db, convertedBit.namespace, convertedBit.metric)) match {
@@ -145,7 +143,7 @@ class NSDbSinkWriter(connection: NSDB,
       writeWithDeliveryPolicy(semanticDelivery, bitSeq.flatMap(connection.write), retries, retryInterval, timeout)
 
       logger.debug("Wrote {} to NSDb.", recordMaps.length)
-    })
+    }
 
   }
 
@@ -155,8 +153,6 @@ class NSDbSinkWriter(connection: NSDB,
 object NSDbSinkWriter {
 
   private val logger = Logger(LoggerFactory.getLogger(classOf[NSDbSinkWriter]))
-
-  private val defaultTimestampKeywords = Set("now", "now()", "sys_time", "sys_time()", "current_time", "current_time()")
 
   private def getFieldName(parent: Option[String], field: String) = parent.map(p => s"$p.$field").getOrElse(field)
 
@@ -343,7 +339,6 @@ object NSDbSinkWriter {
           val globals: mutable.ListBuffer[(String, Any)] = mutable.ListBuffer.empty[(String, Any)]
           globalDb.foreach(db => globals += ((db, db)))
           globalNamespace.foreach(ns => globals += ((ns, ns)))
-          defaultValue.foreach(v => globals += (("defaultValue", v)))
 
           (fields union globals).toMap
         case other =>
@@ -352,88 +347,4 @@ object NSDbSinkWriter {
       }
     }
   }
-
-  /**
-    * Converts values gathered from topic record into a NSdb [[Bit]]
-    * @param parsedKcql Parsed kcql configurations.
-    * @param valuesMap Key value maps retrieved from a topic record.
-    * @return Nsdb Bit built on input configurations and topic data.
-    */
-  private[sink] def convertToBit(parsedKcql: ParsedKcql, valuesMap: Map[String, Any]): Bit = {
-
-    val dbField        = parsedKcql.dbField
-    val namespaceField = parsedKcql.namespaceField
-
-    require(valuesMap.get(dbField).isDefined && valuesMap(dbField).isInstanceOf[String],
-            s"required field $dbField is missing from record or is invalid")
-    require(valuesMap.get(namespaceField).isDefined,
-            s"required field $namespaceField is missing from record or is invalid")
-
-    var bit: Bit =
-      Db(valuesMap(dbField).toString).namespace(valuesMap(namespaceField).toString).metric(parsedKcql.metric)
-
-    parsedKcql.timestampField.flatMap {
-      case f if defaultTimestampKeywords.contains(f) => Some(System.currentTimeMillis())
-      case f                                         => valuesMap.get(f)
-    } match {
-      case Some(t: Long) => bit = bit.timestamp(t)
-      case Some(v)       => sys.error(s"Type ${v.getClass} is not supported for timestamp field")
-      case None          => sys.error(s"Timestamp is not defined in record and a valid default is not provided")
-    }
-
-    parsedKcql.valueField match {
-      case Some(valueField) =>
-        valuesMap.get(valueField) match {
-          case Some(v: Int)                  => bit = bit.value(v)
-          case Some(v: Long)                 => bit = bit.value(v)
-          case Some(v: Double)               => bit = bit.value(v)
-          case Some(v: Float)                => bit = bit.value(v)
-          case Some(v: java.math.BigDecimal) => bit = bit.value(v)
-          case Some(unsupportedValue) =>
-            sys.error(s"Type ${Option(unsupportedValue).map(_.getClass)} is not supported for value field")
-          case None =>
-            sys.error(
-              s"Value not found. Value field cannot be a nullable field and a default value is required if it has not been chosen from input.")
-
-        }
-      case None =>
-        parsedKcql.defaultValue match {
-          case Some(dv) => bit = bit.value(dv)
-          case None     => sys.error(s"Value is not defined in record and a default is not provided")
-        }
-    }
-
-    parsedKcql.dimensionAliasesMap.foreach {
-      case (alias, name) =>
-        valuesMap.get(name) match {
-          case Some(v: Int)                  => bit = bit.dimension(alias, v)
-          case Some(v: Long)                 => bit = bit.dimension(alias, v)
-          case Some(v: Double)               => bit = bit.dimension(alias, v)
-          case Some(v: Float)                => bit = bit.dimension(alias, v)
-          case Some(v: String)               => bit = bit.dimension(alias, v)
-          case Some(v: java.math.BigDecimal) => bit = bit.dimension(alias, v)
-          case Some(unsupportedValue) =>
-            sys.error(s"Type ${Option(unsupportedValue).map(_.getClass)} is not supported for dimensions")
-          case None => ()
-        }
-    }
-
-    parsedKcql.tagAliasesMap.foreach {
-      case (alias, name) =>
-        valuesMap.get(name) match {
-          case Some(v: Int)                  => bit = bit.tag(alias, v)
-          case Some(v: Long)                 => bit = bit.tag(alias, v)
-          case Some(v: Double)               => bit = bit.tag(alias, v)
-          case Some(v: Float)                => bit = bit.tag(alias, v)
-          case Some(v: String)               => bit = bit.tag(alias, v)
-          case Some(v: java.math.BigDecimal) => bit = bit.tag(alias, v)
-          case Some(unsupportedValue) =>
-            sys.error(s"Type ${Option(unsupportedValue).map(_.getClass)} is not supported for tags")
-          case None => ()
-        }
-    }
-
-    bit
-  }
-
 }
