@@ -19,8 +19,8 @@ package io.radicalbit.nsdb.connector.kafka.sink.conf
 import com.datamountaineer.kcql.Kcql
 import io.radicalbit.nsdb.connector.kafka.sink.NSDbSinkWriter.validateDefaultValue
 import io.radicalbit.nsdb.connector.kafka.sink.conf.Constants.{KcqlType, MapType, MappingType}
-import io.radicalbit.nsdb.connector.kafka.sink.models.{MappingInterface, ParsedKcql, EnrichedMapping, Mappings}
-import org.apache.kafka.common.config.ConfigValue
+import io.radicalbit.nsdb.connector.kafka.sink.models.{EnrichedMapping, MappingInterface, Mappings, ParsedKcql}
+import org.apache.kafka.common.config.{ConfigException, ConfigValue}
 
 import scala.util.Try
 
@@ -104,7 +104,7 @@ trait MappingConfUtility {
             Mappings(
               topic = topic,
               metricFieldName = metricsValue.headOption.getOrElse(
-                throw new IllegalArgumentException(s"Metric field for topic $topic must be defined")),
+                throw new ConfigException(s"Metric field for topic $topic must be defined")),
               valueFieldName = valuesValue.headOption,
               timestampFieldName = timestampsValue.headOption,
               tagsFieldName = tagsValue
@@ -143,7 +143,7 @@ trait MappingConfUtility {
           (Constants.MappingType, mappingsByTopic.toList)
 
         case _ =>
-          throw new IllegalArgumentException("Either kcql config or mapping config have not been correctly set.")
+          throw new ConfigException("Either kcql config or mapping config have not been correctly set.")
       }
 
     (queryType, mappingsInterfaceAsString)
@@ -193,8 +193,7 @@ trait MappingConfUtility {
               })
           }
       case None =>
-        throw new IllegalArgumentException(
-          s"Illegal Argument $mappingsType for prop ${NSDbConfigs.NSDB_ENCODED_MAPPINGS_TYPE}")
+        throw new ConfigException(s"Illegal Argument $mappingsType for prop ${NSDbConfigs.NSDB_ENCODED_MAPPINGS_TYPE}")
     }
   }
 }
