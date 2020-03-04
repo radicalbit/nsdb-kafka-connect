@@ -25,7 +25,7 @@ lazy val `nsdb-kafka-connect` = (project in file("."))
     organization := "io.radicalbit.nsdb",
     name := "nsdb-kafka-connect",
     scalaVersion := "2.12.7",
-    crossScalaVersions := Seq("2.11.12", "2.12.7"),
+    crossPaths := false,
     scalacOptions := Seq(
       "-Ypartial-unification",
       "-Ywarn-unused",
