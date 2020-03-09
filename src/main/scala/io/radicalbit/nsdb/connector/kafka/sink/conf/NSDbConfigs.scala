@@ -115,13 +115,13 @@ object NSDbConfigs {
     *
     *         - nsdb.at.least.once.retry.interval time to sleep from a retry to another
     *
-    *         - nsdb.mapping.metrics colon separated list of metrics
+    *         - nsdb.mapping.metrics comma separated list of metrics
     *
-    *         - nsdb.mapping.values colon separated list of values
+    *         - nsdb.mapping.values comma separated list of values
     *
-    *         - nsdb.mapping.tags colon separated list of tags
+    *         - nsdb.mapping.tags comma separated list of tags
     *
-    *         - nsdb.mapping.timestamps colon separated list of timestamps
+    *         - nsdb.mapping.timestamps comma separated list of timestamps
     */
   def configDef: ConfigDef =
     new ConfigDef()

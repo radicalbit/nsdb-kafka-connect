@@ -44,10 +44,10 @@ nsdb.timeout | Timeout used for testing nsdb connection | String | Default value
 nsdb.semantic.delivery | Semantic delivery for writing data into nsdb | String | Two possible values: `at_most_once` (Default), `at_least_once`
 nsdb.at.least.once.retries | Number of maximum writing retries when `at_least_once` semantic is set | Int | Default value is `10`
 nsdb.at.least.once.retry.interval | Time to sleep from a retry to another when `at_least_once` semantic is set | String | Default value is `500 milliseconds`
-nsdb.mapping.metrics | Colon separated list of metrics for topics | String | Format: `topicA.metricFieldName,topicB.metricFieldName` <br>Note: <li>It is mutually exclusive with `nsdb.kcql`</li><li>If it is set, `nsdb.db` and `nsdb.namespace` must be defined</li>
-nsdb.mapping.values | (Optional) Colon separated list of values for topics | String | Format: `topicA.valueFieldName,topicB.valueFieldName`
-nsdb.mapping.tags | (Optional) Colon separated list of tags for topics | String | Format: `topicA.tagFieldName,topicB.tagFieldName`
-nsdb.mapping.timestamps | (Optional) Colon separated list of timestamps for topics | String | Format: `topicA.timestampFieldName,topicB.timestampFieldName`
+nsdb.mapping.metrics | Comma separated list of metrics for topics | String | Format: `topicA.metricFieldName,topicB.metricFieldName` <br>Note: <li>It is mutually exclusive with `nsdb.kcql`</li><li>If it is set, `nsdb.db` and `nsdb.namespace` must be defined</li>
+nsdb.mapping.values | (Optional) Comma separated list of values for topics | String | Format: `topicA.valueFieldName,topicB.valueFieldName`
+nsdb.mapping.tags | (Optional) Comma separated list of tags for topics | String | Format: `topicA.tagFieldName,topicB.tagFieldName`
+nsdb.mapping.timestamps | (Optional) Comma separated list of timestamps for topics | String | Format: `topicA.timestampFieldName,topicB.timestampFieldName`
 
 ## KCQL Support
 
