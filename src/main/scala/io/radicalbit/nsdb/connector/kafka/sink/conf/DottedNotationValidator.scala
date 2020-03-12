@@ -27,7 +27,7 @@ object DottedNotationValidator extends ConfigDef.Validator {
 
   def ensureValid(name: String, value: Any): Unit = {
     Option(value).foreach { v =>
-      if (!v.toString.matches(dottedNotationList.regex))
+      if (!v.toString.isEmpty && !v.toString.matches(dottedNotationList.regex))
         throw new ConfigException(name, value, "Bad field format. Expected: [topicName.fieldName,topicName.fieldName]")
     }
   }
