@@ -130,9 +130,9 @@ trait MappingConfUtility {
 
     val (queryType, mappingsInterfaceAsString) =
       (kcqlConfig, metricsConfig) match {
-        case (Some(kcqlValue), _) =>
+        case (Some(kcqlValue), _) if kcqlValue.nonEmpty =>
           (Constants.KcqlType, kcqlValue.split(";").toList)
-        case (None, Some(metricsValue)) =>
+        case (_, Some(metricsValue)) if metricsValue.nonEmpty =>
           val mappingsByTopic =
             parseMappings(
               metricsValue,
