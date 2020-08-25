@@ -33,7 +33,7 @@ object Dependencies {
 
   object nsdb {
     lazy val namespace = "io.radicalbit.nsdb"
-    lazy val  scalaAPI = Def.setting { namespace %% "nsdb-scala-api" % (ThisBuild / version).value excludeAll
+    lazy val  scalaAPI = Def.setting { namespace %% "nsdb-scala-api" % "1.0.0" excludeAll
       (ExclusionRule(organization = "com.fasterxml.jackson.core"),
         ExclusionRule(organization = "com.fasterxml.jackson.module"),
         ExclusionRule(organization = "com.fasterxml.jackson.datatype"))}
