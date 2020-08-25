@@ -179,8 +179,16 @@ object NSDbSinkWriter {
     def wasSuccessful: Try[List[RPCInsertResult]] => Boolean =
       t => t.map(_.forall(_.completedSuccessfully)).getOrElse(false)
 
-    def onFailure(fail: Try[List[RPCInsertResult]], details: RetryDetails): Unit = {
-      logger.warn("Retrying...")
+    def onFailure(failure: Try[List[RPCInsertResult]], details: RetryDetails): Unit = {
+      failure match {
+        case Success(rpcResultsWithFailures) =>
+          rpcResultsWithFailures.foreach {
+            case RPCInsertResult(false, error) =>
+              logger.warn(s"an error occurred during sink: $error. Retrying...")
+            case _ => //do nothing
+          }
+        case Failure(exception) => logger.warn(s"an error occurred during sink. Retrying...", exception)
+      }
       Sleep[Id].sleep(finiteDurationSleep)
     }
 
